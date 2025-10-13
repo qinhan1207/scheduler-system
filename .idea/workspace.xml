@@ -4,13 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构">
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/SchedulingController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/model/SchedulingRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/model/SchedulingResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/SchedulingService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/SchedulingServiceImpl.java" afterDir="false" />
+    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(scheduler): 实现调度决策核心接口与模型- 添加调度请求模型 SchedulingRequest，支持携带 Pod信息与资源需求&#10;- 添加调度响应模型 SchedulingResponse，包含推荐集群与评分理由&#10;- 实现调度控制器 SchedulingController，提供 /api/schedule 接口&#10;- 实现调度服务接口 SchedulingService 及默认评分策略- 支持空请求处理，允许以全局视角选择最优集群&#10;- 集成 ClusterService 获取集群状态并计算最优选择">
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/TentativeController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/model/TentativeRecord.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/TentativeService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/TentativeServiceImpl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/GlobalSchedulerApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/GlobalSchedulerApplication.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -86,7 +86,12 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Spring Boot.GlobalSchedulerApplication">
+  <component name="RecentsManager">
+    <key name="CreateClassDialog.RecentsKey">
+      <recent name="com.qinhan.service" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Spring Boot.LocalSchedulerAgentApplication">
     <configuration name="GlobalSchedulerApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <module name="global-scheduler" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="com.qinhan.GlobalSchedulerApplication" />
@@ -119,7 +124,7 @@
       <updated>1760167437750</updated>
       <workItem from="1760167438939" duration="777000" />
       <workItem from="1760168717742" duration="5444000" />
-      <workItem from="1760331483234" duration="6344000" />
+      <workItem from="1760331483234" duration="7986000" />
     </task>
     <task id="LOCAL-00001" summary="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构">
       <option name="closed" value="true" />
@@ -129,7 +134,15 @@
       <option name="project" value="LOCAL" />
       <updated>1760333880495</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="feat(scheduler): 实现调度决策核心接口与模型- 添加调度请求模型 SchedulingRequest，支持携带 Pod信息与资源需求&#10;- 添加调度响应模型 SchedulingResponse，包含推荐集群与评分理由&#10;- 实现调度控制器 SchedulingController，提供 /api/schedule 接口&#10;- 实现调度服务接口 SchedulingService 及默认评分策略- 支持空请求处理，允许以全局视角选择最优集群&#10;- 集成 ClusterService 获取集群状态并计算最优选择">
+      <option name="closed" value="true" />
+      <created>1760338053084</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1760338053084</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -148,6 +161,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构" />
+    <MESSAGE value="feat(scheduler): 实现调度决策核心接口与模型- 添加调度请求模型 SchedulingRequest，支持携带 Pod信息与资源需求&#10;- 添加调度响应模型 SchedulingResponse，包含推荐集群与评分理由&#10;- 实现调度控制器 SchedulingController，提供 /api/schedule 接口&#10;- 实现调度服务接口 SchedulingService 及默认评分策略- 支持空请求处理，允许以全局视角选择最优集群&#10;- 集成 ClusterService 获取集群状态并计算最优选择" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(scheduler): 实现调度决策核心接口与模型- 添加调度请求模型 SchedulingRequest，支持携带 Pod信息与资源需求&#10;- 添加调度响应模型 SchedulingResponse，包含推荐集群与评分理由&#10;- 实现调度控制器 SchedulingController，提供 /api/schedule 接口&#10;- 实现调度服务接口 SchedulingService 及默认评分策略- 支持空请求处理，允许以全局视角选择最优集群&#10;- 集成 ClusterService 获取集群状态并计算最优选择" />
   </component>
 </project>
