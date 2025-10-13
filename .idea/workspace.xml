@@ -4,29 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global-scheduler/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/GlobalSchedulerApplication.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/ClusterController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/model/ClusterStatus.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/ClusterService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/ClusterServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/resources/application.properties" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/test/java/com/qinhan/GlobalSchedulerApplicationTests.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/local-scheduler-agent/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/LocalSchedulerAgentApplication.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/model/ClusterStatus.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/ReportService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ReportServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/util/HttpClientUtil.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/resources/application.properties" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/local-scheduler-agent/src/test/java/com/qinhan/LocalSchedulerAgentApplicationTests.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构">
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/SchedulingController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/model/SchedulingRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/model/SchedulingResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/SchedulingService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/SchedulingServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,6 +28,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "qinhan1207"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/qinhan1207/scheduler-system.git",
+    "accountId": "984e4b11-7a22-4eb2-99ec-024959c4c9d1"
+  }
+}]]></component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
       <MavenGeneralSettings>
@@ -90,7 +86,7 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Spring Boot.LocalSchedulerAgentApplication">
+  <component name="RunManager" selected="Spring Boot.GlobalSchedulerApplication">
     <configuration name="GlobalSchedulerApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <module name="global-scheduler" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="com.qinhan.GlobalSchedulerApplication" />
@@ -123,11 +119,35 @@
       <updated>1760167437750</updated>
       <workItem from="1760167438939" duration="777000" />
       <workItem from="1760168717742" duration="5444000" />
-      <workItem from="1760331483234" duration="2063000" />
+      <workItem from="1760331483234" duration="6344000" />
     </task>
+    <task id="LOCAL-00001" summary="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构">
+      <option name="closed" value="true" />
+      <created>1760333880495</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1760333880495</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构" />
   </component>
 </project>
