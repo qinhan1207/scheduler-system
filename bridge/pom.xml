@@ -54,8 +54,15 @@
         <dependency>
             <groupId>io.kubernetes</groupId>
             <artifactId>client-java</artifactId>
-            <version>18.0.0</version>
+            <version>22.0.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>io.kubernetes</groupId>
+            <artifactId>client-java-extended</artifactId>
+            <version>22.0.0</version>
+        </dependency>
+
 
         <!-- JSON 处理 -->
         <dependency>

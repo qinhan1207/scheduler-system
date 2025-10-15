@@ -4,19 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(scheduler): 添加 tentative 调度记录功能&#10;&#10;- 在 GlobalSchedulerApplication 中启用定时调度注解- 新增 TentativeController 接收并查询 tentative 记录- 创建 TentativeRecord 模型存储调度建议相关信息&#10;- 定义 TentativeService 接口及其实现类处理记录逻辑&#10;- 实现定时任务定期确认或拒绝 tentative 调度记录&#10;- 使用内存存储和简单规则模拟集群负载判断">
-      <change afterPath="$PROJECT_DIR$/bridge/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/BridgeApplication.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/controller/TestController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/model/PodEvent.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/BridgeService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/impl/BridgeServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/util/K8sClientUtil.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bridge/src/main/resources/application.properties" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bridge/src/test/java/com/qinhan/BridgeApplicationTests.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(bridge): 初始化 Bridge 模块并实现 Pod 监听功能&#10;&#10;- 添加 Bridge Spring Boot 应用入口类及基础配置&#10;- 配置应用属性文件，指定 Karmada 控制面 kubeconfig 路径与 Global Scheduler 地址&#10;- 实现 BridgeService 接口与核心监听逻辑 BridgeServiceImpl&#10;- 引入 Kubernetes Java Client 并封装 K8sClientUtil 工具类&#10;- 创建 PodEvent 模型用于封装监听到的 Pod 事件信息- 添加 TestController 提供 /ping 接口验证服务运行状态- 配置 Maven pom.xml 文件引入必要依赖（Spring Web、Kubernetes Client 等）&#10;- 更新 IDE 配置文件以支持新模块开发与调试- 添加单元测试基础类 BridgeApplicationTests">
+      <change afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/impl/BridgeServiceImpl2.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/BridgeService.java" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/BridgeService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/impl/BridgeServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/impl/BridgeServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/util/K8sClientUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/util/K8sClientUtil.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,6 +27,7 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RESET_MODE" value="HARD" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {
@@ -64,36 +59,37 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Maven. [org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate].executor": "Run",
-    "Maven.scheduler-system [clean].executor": "Run",
-    "Maven.scheduler-system [compile].executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RequestMappingsPanelOrder0": "0",
-    "RequestMappingsPanelOrder1": "1",
-    "RequestMappingsPanelWidth0": "75",
-    "RequestMappingsPanelWidth1": "75",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "Spring Boot.BridgeApplication.executor": "Debug",
-    "Spring Boot.GlobalSchedulerApplication.executor": "Run",
-    "Spring Boot.LocalSchedulerAgentApplication.executor": "Debug",
-    "git-widget-placeholder": "main",
-    "kotlin-language-version-configured": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Project",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "run.configurations.included.in.services": "true",
-    "settings.editor.selected.configurable": "File.Encoding",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;JUnit.K8sConnectionTest.executor&quot;: &quot;Run&quot;,
+    &quot;Maven. [org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.scheduler-system [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.scheduler-system [compile].executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;Spring Boot.BridgeApplication.executor&quot;: &quot;Debug&quot;,
+    &quot;Spring Boot.GlobalSchedulerApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.LocalSchedulerAgentApplication.executor&quot;: &quot;Debug&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;run.configurations.included.in.services&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;File.Encoding&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CreateClassDialog.RecentsKey">
       <recent name="com.qinhan.service" />
@@ -123,6 +119,21 @@
     </option>
   </component>
   <component name="RunManager" selected="Spring Boot.BridgeApplication">
+    <configuration name="K8sConnectionTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="bridge" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.qinhan.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.qinhan" />
+      <option name="MAIN_CLASS_NAME" value="com.qinhan.K8sConnectionTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="BridgeApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
       <module name="bridge" />
@@ -145,6 +156,11 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JUnit.K8sConnectionTest" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -166,7 +182,13 @@
       <workItem from="1760331483234" duration="8852000" />
       <workItem from="1760340635656" duration="875000" />
       <workItem from="1760341543506" duration="2180000" />
-      <workItem from="1760428617044" duration="629000" />
+      <workItem from="1760428617044" duration="3322000" />
+      <workItem from="1760431972118" duration="1245000" />
+      <workItem from="1760433234396" duration="828000" />
+      <workItem from="1760434087663" duration="226000" />
+      <workItem from="1760434346834" duration="7860000" />
+      <workItem from="1760445261554" duration="4585000" />
+      <workItem from="1760506925729" duration="2032000" />
     </task>
     <task id="LOCAL-00001" summary="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构">
       <option name="closed" value="true" />
@@ -192,7 +214,15 @@
       <option name="project" value="LOCAL" />
       <updated>1760339954221</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="feat(bridge): 初始化 Bridge 模块并实现 Pod 监听功能&#10;&#10;- 添加 Bridge Spring Boot 应用入口类及基础配置&#10;- 配置应用属性文件，指定 Karmada 控制面 kubeconfig 路径与 Global Scheduler 地址&#10;- 实现 BridgeService 接口与核心监听逻辑 BridgeServiceImpl&#10;- 引入 Kubernetes Java Client 并封装 K8sClientUtil 工具类&#10;- 创建 PodEvent 模型用于封装监听到的 Pod 事件信息- 添加 TestController 提供 /ping 接口验证服务运行状态- 配置 Maven pom.xml 文件引入必要依赖（Spring Web、Kubernetes Client 等）&#10;- 更新 IDE 配置文件以支持新模块开发与调试- 添加单元测试基础类 BridgeApplicationTests">
+      <option name="closed" value="true" />
+      <created>1760429273984</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1760429273984</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -203,7 +233,19 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="origin/main" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
           </value>
         </entry>
       </map>
@@ -213,6 +255,7 @@
     <MESSAGE value="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构" />
     <MESSAGE value="feat(scheduler): 实现调度决策核心接口与模型- 添加调度请求模型 SchedulingRequest，支持携带 Pod信息与资源需求&#10;- 添加调度响应模型 SchedulingResponse，包含推荐集群与评分理由&#10;- 实现调度控制器 SchedulingController，提供 /api/schedule 接口&#10;- 实现调度服务接口 SchedulingService 及默认评分策略- 支持空请求处理，允许以全局视角选择最优集群&#10;- 集成 ClusterService 获取集群状态并计算最优选择" />
     <MESSAGE value="feat(scheduler): 添加 tentative 调度记录功能&#10;&#10;- 在 GlobalSchedulerApplication 中启用定时调度注解- 新增 TentativeController 接收并查询 tentative 记录- 创建 TentativeRecord 模型存储调度建议相关信息&#10;- 定义 TentativeService 接口及其实现类处理记录逻辑&#10;- 实现定时任务定期确认或拒绝 tentative 调度记录&#10;- 使用内存存储和简单规则模拟集群负载判断" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(scheduler): 添加 tentative 调度记录功能&#10;&#10;- 在 GlobalSchedulerApplication 中启用定时调度注解- 新增 TentativeController 接收并查询 tentative 记录- 创建 TentativeRecord 模型存储调度建议相关信息&#10;- 定义 TentativeService 接口及其实现类处理记录逻辑&#10;- 实现定时任务定期确认或拒绝 tentative 调度记录&#10;- 使用内存存储和简单规则模拟集群负载判断" />
+    <MESSAGE value="feat(bridge): 初始化 Bridge 模块并实现 Pod 监听功能&#10;&#10;- 添加 Bridge Spring Boot 应用入口类及基础配置&#10;- 配置应用属性文件，指定 Karmada 控制面 kubeconfig 路径与 Global Scheduler 地址&#10;- 实现 BridgeService 接口与核心监听逻辑 BridgeServiceImpl&#10;- 引入 Kubernetes Java Client 并封装 K8sClientUtil 工具类&#10;- 创建 PodEvent 模型用于封装监听到的 Pod 事件信息- 添加 TestController 提供 /ping 接口验证服务运行状态- 配置 Maven pom.xml 文件引入必要依赖（Spring Web、Kubernetes Client 等）&#10;- 更新 IDE 配置文件以支持新模块开发与调试- 添加单元测试基础类 BridgeApplicationTests" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(bridge): 初始化 Bridge 模块并实现 Pod 监听功能&#10;&#10;- 添加 Bridge Spring Boot 应用入口类及基础配置&#10;- 配置应用属性文件，指定 Karmada 控制面 kubeconfig 路径与 Global Scheduler 地址&#10;- 实现 BridgeService 接口与核心监听逻辑 BridgeServiceImpl&#10;- 引入 Kubernetes Java Client 并封装 K8sClientUtil 工具类&#10;- 创建 PodEvent 模型用于封装监听到的 Pod 事件信息- 添加 TestController 提供 /ping 接口验证服务运行状态- 配置 Maven pom.xml 文件引入必要依赖（Spring Web、Kubernetes Client 等）&#10;- 更新 IDE 配置文件以支持新模块开发与调试- 添加单元测试基础类 BridgeApplicationTests" />
   </component>
 </project>
