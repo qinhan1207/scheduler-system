@@ -4,13 +4,20 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(bridge): 初始化 Bridge 模块并实现 Pod 监听功能&#10;&#10;- 添加 Bridge Spring Boot 应用入口类及基础配置&#10;- 配置应用属性文件，指定 Karmada 控制面 kubeconfig 路径与 Global Scheduler 地址&#10;- 实现 BridgeService 接口与核心监听逻辑 BridgeServiceImpl&#10;- 引入 Kubernetes Java Client 并封装 K8sClientUtil 工具类&#10;- 创建 PodEvent 模型用于封装监听到的 Pod 事件信息- 添加 TestController 提供 /ping 接口验证服务运行状态- 配置 Maven pom.xml 文件引入必要依赖（Spring Web、Kubernetes Client 等）&#10;- 更新 IDE 配置文件以支持新模块开发与调试- 添加单元测试基础类 BridgeApplicationTests">
-      <change afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/impl/BridgeServiceImpl2.java" afterDir="false" />
+    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(bridge):重构 Bridge 服务实现并增强 Work 监听功能&#10;&#10;- 将 BridgeServiceImpl重构为基于 kubectl 命令行的监听机制&#10;- 新增 BridgeServiceImpl2 使用原生 Kubernetes Java Client 监听 Work 对象&#10;- 扩展 BridgeService 接口，添加启动、停止、状态查询等管理方法&#10;- 增强 K8sClientUtil 支持跳过 SSL 证书验证和自定义超时配置&#10;- 升级 Kubernetes Java Client 版本至 22.0 并引入扩展包&#10;- 实现健康检查、活动日志记录和手动触发调度功能&#10;- 添加 Work 缓存管理和统计信息接口- 改进异常处理和连接重试机制，提高服务稳定性">
+      <change afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/controller/DebugController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/model/SchedulingEvent.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bridge/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/BridgeApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/BridgeApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/controller/TestController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/model/PodEvent.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/BridgeService.java" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/BridgeService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/impl/BridgeServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/impl/BridgeServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/impl/BridgeServiceImpl2.java" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/impl/BridgeServiceImpl2.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/util/K8sClientUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/util/K8sClientUtil.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/test/java/com/qinhan/BridgeApplicationTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/src/test/java/com/qinhan/BridgeApplicationTests.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,6 +70,9 @@
   &quot;keyToString&quot;: {
     &quot;JUnit.K8sConnectionTest.executor&quot;: &quot;Run&quot;,
     &quot;Maven. [org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.bridge [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.bridge [compile].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.bridge [install].executor&quot;: &quot;Run&quot;,
     &quot;Maven.scheduler-system [clean].executor&quot;: &quot;Run&quot;,
     &quot;Maven.scheduler-system [compile].executor&quot;: &quot;Run&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
@@ -71,8 +81,9 @@
     &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
     &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;Spring Boot.BridgeApplication.executor&quot;: &quot;Debug&quot;,
+    &quot;Spring Boot.BridgeApplication.executor&quot;: &quot;Run&quot;,
     &quot;Spring Boot.GlobalSchedulerApplication.executor&quot;: &quot;Run&quot;,
     &quot;Spring Boot.LocalSchedulerAgentApplication.executor&quot;: &quot;Debug&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
@@ -188,7 +199,12 @@
       <workItem from="1760434087663" duration="226000" />
       <workItem from="1760434346834" duration="7860000" />
       <workItem from="1760445261554" duration="4585000" />
-      <workItem from="1760506925729" duration="2032000" />
+      <workItem from="1760506925729" duration="3556000" />
+      <workItem from="1760511563266" duration="1302000" />
+      <workItem from="1760512891538" duration="475000" />
+      <workItem from="1760513377719" duration="6822000" />
+      <workItem from="1760527180170" duration="10000" />
+      <workItem from="1760591330617" duration="369000" />
     </task>
     <task id="LOCAL-00001" summary="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构">
       <option name="closed" value="true" />
@@ -222,7 +238,15 @@
       <option name="project" value="LOCAL" />
       <updated>1760429273984</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="feat(bridge):重构 Bridge 服务实现并增强 Work 监听功能&#10;&#10;- 将 BridgeServiceImpl重构为基于 kubectl 命令行的监听机制&#10;- 新增 BridgeServiceImpl2 使用原生 Kubernetes Java Client 监听 Work 对象&#10;- 扩展 BridgeService 接口，添加启动、停止、状态查询等管理方法&#10;- 增强 K8sClientUtil 支持跳过 SSL 证书验证和自定义超时配置&#10;- 升级 Kubernetes Java Client 版本至 22.0 并引入扩展包&#10;- 实现健康检查、活动日志记录和手动触发调度功能&#10;- 添加 Work 缓存管理和统计信息接口- 改进异常处理和连接重试机制，提高服务稳定性">
+      <option name="closed" value="true" />
+      <created>1760510015912</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1760510015912</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -256,6 +280,7 @@
     <MESSAGE value="feat(scheduler): 实现调度决策核心接口与模型- 添加调度请求模型 SchedulingRequest，支持携带 Pod信息与资源需求&#10;- 添加调度响应模型 SchedulingResponse，包含推荐集群与评分理由&#10;- 实现调度控制器 SchedulingController，提供 /api/schedule 接口&#10;- 实现调度服务接口 SchedulingService 及默认评分策略- 支持空请求处理，允许以全局视角选择最优集群&#10;- 集成 ClusterService 获取集群状态并计算最优选择" />
     <MESSAGE value="feat(scheduler): 添加 tentative 调度记录功能&#10;&#10;- 在 GlobalSchedulerApplication 中启用定时调度注解- 新增 TentativeController 接收并查询 tentative 记录- 创建 TentativeRecord 模型存储调度建议相关信息&#10;- 定义 TentativeService 接口及其实现类处理记录逻辑&#10;- 实现定时任务定期确认或拒绝 tentative 调度记录&#10;- 使用内存存储和简单规则模拟集群负载判断" />
     <MESSAGE value="feat(bridge): 初始化 Bridge 模块并实现 Pod 监听功能&#10;&#10;- 添加 Bridge Spring Boot 应用入口类及基础配置&#10;- 配置应用属性文件，指定 Karmada 控制面 kubeconfig 路径与 Global Scheduler 地址&#10;- 实现 BridgeService 接口与核心监听逻辑 BridgeServiceImpl&#10;- 引入 Kubernetes Java Client 并封装 K8sClientUtil 工具类&#10;- 创建 PodEvent 模型用于封装监听到的 Pod 事件信息- 添加 TestController 提供 /ping 接口验证服务运行状态- 配置 Maven pom.xml 文件引入必要依赖（Spring Web、Kubernetes Client 等）&#10;- 更新 IDE 配置文件以支持新模块开发与调试- 添加单元测试基础类 BridgeApplicationTests" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(bridge): 初始化 Bridge 模块并实现 Pod 监听功能&#10;&#10;- 添加 Bridge Spring Boot 应用入口类及基础配置&#10;- 配置应用属性文件，指定 Karmada 控制面 kubeconfig 路径与 Global Scheduler 地址&#10;- 实现 BridgeService 接口与核心监听逻辑 BridgeServiceImpl&#10;- 引入 Kubernetes Java Client 并封装 K8sClientUtil 工具类&#10;- 创建 PodEvent 模型用于封装监听到的 Pod 事件信息- 添加 TestController 提供 /ping 接口验证服务运行状态- 配置 Maven pom.xml 文件引入必要依赖（Spring Web、Kubernetes Client 等）&#10;- 更新 IDE 配置文件以支持新模块开发与调试- 添加单元测试基础类 BridgeApplicationTests" />
+    <MESSAGE value="feat(bridge):重构 Bridge 服务实现并增强 Work 监听功能&#10;&#10;- 将 BridgeServiceImpl重构为基于 kubectl 命令行的监听机制&#10;- 新增 BridgeServiceImpl2 使用原生 Kubernetes Java Client 监听 Work 对象&#10;- 扩展 BridgeService 接口，添加启动、停止、状态查询等管理方法&#10;- 增强 K8sClientUtil 支持跳过 SSL 证书验证和自定义超时配置&#10;- 升级 Kubernetes Java Client 版本至 22.0 并引入扩展包&#10;- 实现健康检查、活动日志记录和手动触发调度功能&#10;- 添加 Work 缓存管理和统计信息接口- 改进异常处理和连接重试机制，提高服务稳定性" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(bridge):重构 Bridge 服务实现并增强 Work 监听功能&#10;&#10;- 将 BridgeServiceImpl重构为基于 kubectl 命令行的监听机制&#10;- 新增 BridgeServiceImpl2 使用原生 Kubernetes Java Client 监听 Work 对象&#10;- 扩展 BridgeService 接口，添加启动、停止、状态查询等管理方法&#10;- 增强 K8sClientUtil 支持跳过 SSL 证书验证和自定义超时配置&#10;- 升级 Kubernetes Java Client 版本至 22.0 并引入扩展包&#10;- 实现健康检查、活动日志记录和手动触发调度功能&#10;- 添加 Work 缓存管理和统计信息接口- 改进异常处理和连接重试机制，提高服务稳定性" />
   </component>
 </project>
