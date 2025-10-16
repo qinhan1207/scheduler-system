@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * GC 的核心调度接口 —— 根据输入的 workload / policy / 集群状态 做出调度决策。
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api")

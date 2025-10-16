@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 管理与展示各个集群的状态信息
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/clusters")
@@ -19,8 +22,8 @@ public class ClusterController {
 
     /**
      * 接收上报的数据
-     * @param status
-     * @return
+     * @param status 由成员集群进行上报的数据
+     * @return 数据来自哪一个集群
      */
     @PostMapping("/report")
     public String reportStatus(@RequestBody ClusterStatus status) {

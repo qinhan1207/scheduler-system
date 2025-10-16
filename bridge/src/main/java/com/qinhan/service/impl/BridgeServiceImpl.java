@@ -1,6 +1,7 @@
 package com.qinhan.service.impl;
 
 import com.google.gson.reflect.TypeToken;
+import com.qinhan.client.GlobalSchedulerClient;
 import com.qinhan.model.SchedulingEvent;
 import com.qinhan.service.BridgeService;
 import com.qinhan.util.K8sClientUtil;
@@ -10,6 +11,7 @@ import io.kubernetes.client.openapi.apis.CustomObjectsApi;
 import io.kubernetes.client.util.Watch;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +25,9 @@ public class BridgeServiceImpl implements BridgeService {
 
     @Value("${bridge.kubeconfig.path}")
     private String kubeconfigPath;
+
+    @Autowired
+    private GlobalSchedulerClient globalSchedulerClient;
 
     private volatile boolean watching = false;
     private Call watchCall;
@@ -243,6 +248,7 @@ public class BridgeServiceImpl implements BridgeService {
      */
     private void sendToGlobalScheduler(SchedulingEvent event) {
         // TODO: 实现GS的HTTP客户端调用
+        globalSchedulerClient.sendSchedulingEvent(event);
         log.info("📤 发送调度事件给GS: {}", event);
     }
 }
