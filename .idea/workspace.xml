@@ -4,17 +4,38 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(bridge): 实现ResourceBinding监听功能&#10;&#10;- 修改配置文件路径前缀为bridge.kubeconfig.path&#10;- 在BridgeApplication中实现CommandLineRunner接口以启动监听&#10;- 更新BridgeService接口方法，专注ResourceBinding监听- 重构BridgeServiceImpl实现ResourceBinding事件监听逻辑&#10;- 注释掉BridgeServiceImpl2的旧实现代码- 添加K8sClientUtil和CustomObjectsApi依赖引入&#10;- 实现createWatch方法用于创建ResourceBinding监听&#10;- 添加handleResourceBindingEvent处理具体事件逻辑&#10;- 引入SchedulingEvent模型用于事件封装&#10;- 添加sendToGlobalScheduler方法用于发送事件给调度器- 实现testConnection方法用于测试Karmada连接状态- 移除旧的Work对象相关监听和调度逻辑&#10;- 更新日志记录方式，增强事件处理可追踪性- 优化watch循环逻辑，增加重试机制和异常处理&#10;- 调整属性注入字段名称和配置引用方式- 删除无关注解和旧有健康检查、手动调度等功能&#10;- 简化监听器启停逻辑，移除定时任务执行器-优化事件解析逻辑，支持ADDED/MODIFIED/DELETED类型&#10;- 增加对ResourceBinding状态和集群信息的提取&#10;- 补充ApiException捕获和更详细的错误日志记录">
-      <change afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/client/GlobalSchedulerClient.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/controller/TestController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/BridgeEventController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/model/SchedulingEvent.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/BridgeEventService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/BridgeEventServiceImpl.java" afterDir="false" />
+    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(bridge): 实现ResourceBinding事件监听与上报功能&#10;&#10;- 移除BridgeApplication中的CommandLineRunner实现&#10;- 新增GlobalSchedulerClient用于向全局调度器发送事件&#10;- 创建TestController提供测试事件发送接口&#10;- 在BridgeServiceImpl中集成事件发送逻辑- 新增SchedulingEvent模型封装调度事件信息&#10;- 添加BridgeEventController处理接收的Bridge事件- 实现BridgeEventService及其实现类处理事件存储与查询&#10;- 更新ClusterController和SchedulingController的注释说明">
+      <change afterPath="$PROJECT_DIR$/bridge/src/main/resources/application.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/config/ClusterConfiguration.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/resources/application.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scheduler-common/pom.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/properties/ClusterProperties.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/properties/HttpClientProperties.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/properties/K8sClientProperties.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/HttpClientUtil.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/K8sClientUtil.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scheduler-pojo/pom.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scheduler-pojo/src/test/java/com/qinhan/AppTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/controller/DebugController.java" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/controller/DebugController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/model/SchedulingEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/SchedulingEvent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/BridgeService.java" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/BridgeService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/impl/BridgeServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/impl/BridgeServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/ClusterController.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/ClusterController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/SchedulingController.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/SchedulingController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/util/K8sClientUtil.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/test/java/com/qinhan/BridgeApplicationTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/src/test/java/com/qinhan/BridgeApplicationTests.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/model/ClusterStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/ClusterStatus.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/model/SchedulingEvent.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/model/SchedulingRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/SchedulingRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/model/SchedulingResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/SchedulingResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/model/TentativeRecord.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/TentativeRecord.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/LocalSchedulerAgentApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/LocalSchedulerAgentApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/model/ClusterStatus.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/resources/application.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,44 +84,51 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;JUnit.K8sConnectionTest.executor&quot;: &quot;Run&quot;,
-    &quot;Maven. [org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.bridge [clean].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.bridge [compile].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.bridge [install].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.scheduler-system [clean].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.scheduler-system [compile].executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
-    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
-    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
-    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;Spring Boot.BridgeApplication.executor&quot;: &quot;Run&quot;,
-    &quot;Spring Boot.GlobalSchedulerApplication.executor&quot;: &quot;Run&quot;,
-    &quot;Spring Boot.LocalSchedulerAgentApplication.executor&quot;: &quot;Debug&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;run.configurations.included.in.services&quot;: &quot;true&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;File.Encoding&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "JUnit.K8sConnectionTest.executor": "Run",
+    "Maven. [org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate].executor": "Run",
+    "Maven.bridge [clean].executor": "Run",
+    "Maven.bridge [compile].executor": "Run",
+    "Maven.bridge [install].executor": "Run",
+    "Maven.scheduler-system [clean].executor": "Run",
+    "Maven.scheduler-system [compile].executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "Spring Boot.BridgeApplication.executor": "Run",
+    "Spring Boot.GlobalSchedulerApplication.executor": "Run",
+    "Spring Boot.LocalSchedulerAgentApplication.executor": "Debug",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/code/back/scheduler-system/scheduler-pojo/src/main/java/com/qinhan/model",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "run.configurations.included.in.services": "true",
+    "settings.editor.selected.configurable": "File.Encoding",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CreateClassDialog.RecentsKey">
       <recent name="com.qinhan.service" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\code\back\scheduler-system\scheduler-pojo\src\main\java\com\qinhan\model" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.qinhan.model" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -126,7 +154,7 @@
       </map>
     </option>
   </component>
-  <component name="RunManager" selected="Spring Boot.BridgeApplication">
+  <component name="RunManager" selected="Spring Boot.GlobalSchedulerApplication">
     <configuration name="K8sConnectionTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="bridge" />
       <extension name="coverage">
@@ -201,7 +229,8 @@
       <workItem from="1760512891538" duration="475000" />
       <workItem from="1760513377719" duration="6822000" />
       <workItem from="1760527180170" duration="10000" />
-      <workItem from="1760591330617" duration="5428000" />
+      <workItem from="1760591330617" duration="11188000" />
+      <workItem from="1760681350321" duration="8794000" />
     </task>
     <task id="LOCAL-00001" summary="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构">
       <option name="closed" value="true" />
@@ -251,7 +280,15 @@
       <option name="project" value="LOCAL" />
       <updated>1760592000555</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="feat(bridge): 实现ResourceBinding事件监听与上报功能&#10;&#10;- 移除BridgeApplication中的CommandLineRunner实现&#10;- 新增GlobalSchedulerClient用于向全局调度器发送事件&#10;- 创建TestController提供测试事件发送接口&#10;- 在BridgeServiceImpl中集成事件发送逻辑- 新增SchedulingEvent模型封装调度事件信息&#10;- 添加BridgeEventController处理接收的Bridge事件- 实现BridgeEventService及其实现类处理事件存储与查询&#10;- 更新ClusterController和SchedulingController的注释说明">
+      <option name="closed" value="true" />
+      <created>1760597025740</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1760597025740</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -287,6 +324,7 @@
     <MESSAGE value="feat(bridge): 初始化 Bridge 模块并实现 Pod 监听功能&#10;&#10;- 添加 Bridge Spring Boot 应用入口类及基础配置&#10;- 配置应用属性文件，指定 Karmada 控制面 kubeconfig 路径与 Global Scheduler 地址&#10;- 实现 BridgeService 接口与核心监听逻辑 BridgeServiceImpl&#10;- 引入 Kubernetes Java Client 并封装 K8sClientUtil 工具类&#10;- 创建 PodEvent 模型用于封装监听到的 Pod 事件信息- 添加 TestController 提供 /ping 接口验证服务运行状态- 配置 Maven pom.xml 文件引入必要依赖（Spring Web、Kubernetes Client 等）&#10;- 更新 IDE 配置文件以支持新模块开发与调试- 添加单元测试基础类 BridgeApplicationTests" />
     <MESSAGE value="feat(bridge):重构 Bridge 服务实现并增强 Work 监听功能&#10;&#10;- 将 BridgeServiceImpl重构为基于 kubectl 命令行的监听机制&#10;- 新增 BridgeServiceImpl2 使用原生 Kubernetes Java Client 监听 Work 对象&#10;- 扩展 BridgeService 接口，添加启动、停止、状态查询等管理方法&#10;- 增强 K8sClientUtil 支持跳过 SSL 证书验证和自定义超时配置&#10;- 升级 Kubernetes Java Client 版本至 22.0 并引入扩展包&#10;- 实现健康检查、活动日志记录和手动触发调度功能&#10;- 添加 Work 缓存管理和统计信息接口- 改进异常处理和连接重试机制，提高服务稳定性" />
     <MESSAGE value="feat(bridge): 实现ResourceBinding监听功能&#10;&#10;- 修改配置文件路径前缀为bridge.kubeconfig.path&#10;- 在BridgeApplication中实现CommandLineRunner接口以启动监听&#10;- 更新BridgeService接口方法，专注ResourceBinding监听- 重构BridgeServiceImpl实现ResourceBinding事件监听逻辑&#10;- 注释掉BridgeServiceImpl2的旧实现代码- 添加K8sClientUtil和CustomObjectsApi依赖引入&#10;- 实现createWatch方法用于创建ResourceBinding监听&#10;- 添加handleResourceBindingEvent处理具体事件逻辑&#10;- 引入SchedulingEvent模型用于事件封装&#10;- 添加sendToGlobalScheduler方法用于发送事件给调度器- 实现testConnection方法用于测试Karmada连接状态- 移除旧的Work对象相关监听和调度逻辑&#10;- 更新日志记录方式，增强事件处理可追踪性- 优化watch循环逻辑，增加重试机制和异常处理&#10;- 调整属性注入字段名称和配置引用方式- 删除无关注解和旧有健康检查、手动调度等功能&#10;- 简化监听器启停逻辑，移除定时任务执行器-优化事件解析逻辑，支持ADDED/MODIFIED/DELETED类型&#10;- 增加对ResourceBinding状态和集群信息的提取&#10;- 补充ApiException捕获和更详细的错误日志记录" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(bridge): 实现ResourceBinding监听功能&#10;&#10;- 修改配置文件路径前缀为bridge.kubeconfig.path&#10;- 在BridgeApplication中实现CommandLineRunner接口以启动监听&#10;- 更新BridgeService接口方法，专注ResourceBinding监听- 重构BridgeServiceImpl实现ResourceBinding事件监听逻辑&#10;- 注释掉BridgeServiceImpl2的旧实现代码- 添加K8sClientUtil和CustomObjectsApi依赖引入&#10;- 实现createWatch方法用于创建ResourceBinding监听&#10;- 添加handleResourceBindingEvent处理具体事件逻辑&#10;- 引入SchedulingEvent模型用于事件封装&#10;- 添加sendToGlobalScheduler方法用于发送事件给调度器- 实现testConnection方法用于测试Karmada连接状态- 移除旧的Work对象相关监听和调度逻辑&#10;- 更新日志记录方式，增强事件处理可追踪性- 优化watch循环逻辑，增加重试机制和异常处理&#10;- 调整属性注入字段名称和配置引用方式- 删除无关注解和旧有健康检查、手动调度等功能&#10;- 简化监听器启停逻辑，移除定时任务执行器-优化事件解析逻辑，支持ADDED/MODIFIED/DELETED类型&#10;- 增加对ResourceBinding状态和集群信息的提取&#10;- 补充ApiException捕获和更详细的错误日志记录" />
+    <MESSAGE value="feat(bridge): 实现ResourceBinding事件监听与上报功能&#10;&#10;- 移除BridgeApplication中的CommandLineRunner实现&#10;- 新增GlobalSchedulerClient用于向全局调度器发送事件&#10;- 创建TestController提供测试事件发送接口&#10;- 在BridgeServiceImpl中集成事件发送逻辑- 新增SchedulingEvent模型封装调度事件信息&#10;- 添加BridgeEventController处理接收的Bridge事件- 实现BridgeEventService及其实现类处理事件存储与查询&#10;- 更新ClusterController和SchedulingController的注释说明" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(bridge): 实现ResourceBinding事件监听与上报功能&#10;&#10;- 移除BridgeApplication中的CommandLineRunner实现&#10;- 新增GlobalSchedulerClient用于向全局调度器发送事件&#10;- 创建TestController提供测试事件发送接口&#10;- 在BridgeServiceImpl中集成事件发送逻辑- 新增SchedulingEvent模型封装调度事件信息&#10;- 添加BridgeEventController处理接收的Bridge事件- 实现BridgeEventService及其实现类处理事件存储与查询&#10;- 更新ClusterController和SchedulingController的注释说明" />
   </component>
 </project>

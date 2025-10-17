@@ -23,6 +23,9 @@ import java.util.List;
 @Service
 public class BridgeServiceImpl implements BridgeService {
 
+    @Autowired
+    private K8sClientUtil k8sClientUtil;
+
     @Value("${bridge.kubeconfig.path}")
     private String kubeconfigPath;
 
@@ -55,7 +58,7 @@ public class BridgeServiceImpl implements BridgeService {
     @Override
     public boolean testConnection() {
         try {
-            ApiClient client = K8sClientUtil.getClient(kubeconfigPath);
+            ApiClient client = k8sClientUtil.getClient(kubeconfigPath);
             CustomObjectsApi api = new CustomObjectsApi(client);
 
             // 新的调用方式 - 使用Request Builder
@@ -77,7 +80,7 @@ public class BridgeServiceImpl implements BridgeService {
         watching = true;
 
         try {
-            ApiClient client = K8sClientUtil.getClient(kubeconfigPath);
+            ApiClient client = k8sClientUtil.getClient(kubeconfigPath);
             CustomObjectsApi api = new CustomObjectsApi(client);
 
             log.info("🔍 开始监听ResourceBinding资源变化...");

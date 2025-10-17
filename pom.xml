@@ -6,7 +6,6 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.5.6</version> <!-- 与子项目原Spring Boot版本保持一致 -->
-        <relativePath/>
     </parent>
 
     <groupId>com.qinhan</groupId>
@@ -19,11 +18,15 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <lombok>1.18.30</lombok>
     </properties>
 
     <modules>
+        <module>bridge</module>
         <module>global-scheduler</module>
         <module>local-scheduler-agent</module>
+        <module>scheduler-common</module>
+        <module>scheduler-pojo</module>
     </modules>
 
     <dependencies>
@@ -32,6 +35,17 @@
             <artifactId>junit</artifactId>
             <version>3.8.1</version>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok}</version>
         </dependency>
 
     </dependencies>

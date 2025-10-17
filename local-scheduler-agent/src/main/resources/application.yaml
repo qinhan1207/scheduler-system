@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: local-scheduler-agent
+server:
+  port: 8081
+
+# 多集群LSA配置
+lsa:
+  report-interval-seconds: 10
+  thread-pool-size: 20
+  global-scheduler:
+    url: http://localhost:8080/api/clusters/report
+
+  clusters:
+    - name: kwok-cluster01
+      kubeconfig: /path/to/kubeconfigs/kwok-cluster01.kubeconfig
+      simulated-profile: normal
+    - name: kwok-cluster02
+      kubeconfig: /path/to/kubeconfigs/kwok-cluster02.kubeconfig
+      simulated-profile: normal
+    # ... 添加直到 kwok-cluster20

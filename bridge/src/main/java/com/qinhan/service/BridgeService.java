@@ -1,7 +1,5 @@
 package com.qinhan.service;
 
-import com.qinhan.model.SchedulingEvent;
-
 public interface BridgeService {
 
 

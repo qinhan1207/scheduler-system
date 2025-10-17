@@ -16,7 +16,11 @@ public class DebugController {
     private static final String GROUP = "work.karmada.io";
     private static final String VERSION = "v1alpha2";
     private static final String PLURAL = "resourcebindings";
-    
+
+
+    @Autowired
+    private K8sClientUtil k8sClientUtil;
+
     @Autowired
     private BridgeService bridgeService;
     
@@ -29,7 +33,7 @@ public class DebugController {
     @GetMapping("/list-bindings")
     public String listBindings() {
         try {
-            ApiClient client = K8sClientUtil.getClient("E:\\karmada-config");
+            ApiClient client = k8sClientUtil.getClient("E:\\karmada-config");
             CustomObjectsApi api = new CustomObjectsApi(client);
             
             Object result = api.listClusterCustomObject(GROUP, VERSION, PLURAL)
