@@ -6,16 +6,22 @@ server:
 
 # 多集群LSA配置
 lsa:
-  report-interval-seconds: 10
-  thread-pool-size: 20
-  global-scheduler:
-    url: http://localhost:8080/api/clusters/report
-
   clusters:
-    - name: kwok-cluster01
-      kubeconfig: /path/to/kubeconfigs/kwok-cluster01.kubeconfig
-      simulated-profile: normal
-    - name: kwok-cluster02
-      kubeconfig: /path/to/kubeconfigs/kwok-cluster02.kubeconfig
-      simulated-profile: normal
-    # ... 添加直到 kwok-cluster20
+    configs:
+      - name: cluster01
+        kubeconfigPath: E:\kubeconfig\my-kubeconfig-01.yaml
+      - name: cluster02
+        kubeconfigPath: E:\kubeconfig\my-kubeconfig-02.yaml
+      - name: cluster03
+        kubeconfigPath: E:\kubeconfig\my-kubeconfig-03.yaml
+      - name: cluster04
+        kubeconfigPath: E:\kubeconfig\my-kubeconfig-04.yaml
+      - name: cluster05
+        kubeconfigPath: E:\kubeconfig\my-kubeconfig-05.yaml
+      # 如果是 kwok 模拟环境，也可以使用共享配置
+      # - name: karmada-kwok-01
+      #   kubeconfigPath: /etc/karmada/kwok/kubeconfig.yaml
+
+global:
+  scheduler:
+    url: http://localhost:8080

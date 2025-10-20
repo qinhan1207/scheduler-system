@@ -1,5 +1,8 @@
 package com.qinhan.service;
 
 public interface ReportService {
-    void reportClusterStatus();
+    /**
+     * 定时采集并上报所有集群状态
+     */
+    void reportAllClusters();
 }

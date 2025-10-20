@@ -10,7 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @SpringBootApplication
 @EnableConfigurationProperties(ClusterProperties.class)
-public class LocalSchedulerAgentApplication {
+public class LocalSchedulerAgentApplication  {
 
     public static void main(String[] args) {
         SpringApplication.run(LocalSchedulerAgentApplication.class, args);
