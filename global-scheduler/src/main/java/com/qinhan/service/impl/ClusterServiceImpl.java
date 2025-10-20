@@ -25,7 +25,7 @@ public class ClusterServiceImpl implements ClusterService {
 
         // 计算健康分值
         double healthScore = HealthEvaluator.calculateScore(status);
-        status.setHealthStatus(healthStatus);
+        status.setHealthScore(healthScore);
 
         clusterMap.put(status.getClusterName(), status);
 

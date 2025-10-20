@@ -10,4 +10,7 @@ server:
   port: 8082
 global:
   scheduler:
-    url: http://localhost:80800
+    url: http://localhost:8080
+bridge:
+  kubeconfig:
+    path: E:\karmada-config

@@ -1,10 +1,12 @@
 package com.qinhan.service.impl;
 
+import com.qinhan.decision.GlobalDecisionEngine;
 import com.qinhan.model.SchedulingEvent;
 import com.qinhan.model.TentativeRecord;
 import com.qinhan.service.BridgeEventService;
 import com.qinhan.service.TentativeService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -16,6 +18,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class BridgeEventServiceImpl implements BridgeEventService {
+
+    @Autowired
+    private GlobalDecisionEngine globalDecisionEngine;
 
     private final Map<String, SchedulingEvent> eventStore = new ConcurrentHashMap<>();
     private final TentativeService tentativeService;
@@ -44,6 +49,7 @@ public class BridgeEventServiceImpl implements BridgeEventService {
             // - 分析调度决策是否合理
             // - 记录调度历史用于优化
             // - 触发重新调度评估
+            globalDecisionEngine.evaluateSchedulingEvent(event);
             
         } catch (Exception e) {
             log.error("❌ 处理Bridge事件失败: {}/{}", event.getNamespace(), event.getName(), e);
