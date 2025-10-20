@@ -1,6 +1,7 @@
 package com.qinhan.model;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +12,7 @@ import java.time.Instant;
  * 由 Local Scheduler Agent (LSA) 周期性上报给 Global Scheduler (GC)
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ClusterStatus {
@@ -33,11 +35,16 @@ public class ClusterStatus {
     /** 最近上报时间戳 */
     private long timestamp;
 
+    /** 可选字段：备注信息，例如异常原因 */
+    private String remark;
+
     /** 可选字段：集群健康状态 */
     private String healthStatus;
 
-    /** 可选字段：备注信息，例如异常原因 */
-    private String remark;
+    // 新增字段
+
+    /** 健康分：0-100 越高越好 **/
+    private double healthScore;
 
 
 

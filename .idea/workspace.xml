@@ -4,20 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="refactor(config):重构应用配置文件格式&#10;&#10;- 将 bridge 模块的 application.properties 配置移除&#10;- 将 global-scheduler 模块的配置文件从 properties 格式改为 yaml 格式- 保持 global-scheduler 的应用名称配置不变">
-      <change afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/client/GlobalSchedulerClient.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/ClusterMonitorService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ClusterMonitorServiceImpl.java" afterDir="false" />
+    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(lsa): 实现多集群状态采集与上报功能&#10;&#10;- 重构 application.yaml 配置结构，支持多个 kubeconfig 配置- 新增 ClusterMonitorService 接口及实现，负责连接测试与状态采集&#10;- 新增 GlobalSchedulerClient 用于向全局调度器上报集群状态&#10;- 修改 ClusterStatus 模型，增加节点数、Pod数等字段&#10;- 更新 ReportService 接口方法名并增强实现逻辑&#10;- 调整 ClusterProperties 配置类以适配新的 YAML 结构- 移除无用的 AppTest 测试类和 ClusterConfiguration 配置类&#10;- 增加 LocalSchedulerAgentApplicationTests 集成测试用例">
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/ClusterSelector.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/HealthEvaluator.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/LocalSchedulerAgentApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/LocalSchedulerAgentApplication.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/config/ClusterConfiguration.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/ReportService.java" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/ReportService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ReportServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ReportServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/resources/application.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/test/java/com/qinhan/LocalSchedulerAgentApplicationTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/test/java/com/qinhan/LocalSchedulerAgentApplicationTests.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/properties/ClusterProperties.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/properties/ClusterProperties.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/ClusterService.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/ClusterService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/ClusterServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/ClusterServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ClusterMonitorServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ClusterMonitorServiceImpl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/ClusterStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/ClusterStatus.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scheduler-pojo/src/test/java/com/qinhan/AppTest.java" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -267,7 +262,7 @@
       <workItem from="1760527180170" duration="10000" />
       <workItem from="1760591330617" duration="11188000" />
       <workItem from="1760681350321" duration="12598000" />
-      <workItem from="1760935355420" duration="5208000" />
+      <workItem from="1760935355420" duration="9231000" />
     </task>
     <task id="LOCAL-00001" summary="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构">
       <option name="closed" value="true" />
@@ -341,7 +336,15 @@
       <option name="project" value="LOCAL" />
       <updated>1760690482941</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="feat(lsa): 实现多集群状态采集与上报功能&#10;&#10;- 重构 application.yaml 配置结构，支持多个 kubeconfig 配置- 新增 ClusterMonitorService 接口及实现，负责连接测试与状态采集&#10;- 新增 GlobalSchedulerClient 用于向全局调度器上报集群状态&#10;- 修改 ClusterStatus 模型，增加节点数、Pod数等字段&#10;- 更新 ReportService 接口方法名并增强实现逻辑&#10;- 调整 ClusterProperties 配置类以适配新的 YAML 结构- 移除无用的 AppTest 测试类和 ClusterConfiguration 配置类&#10;- 增加 LocalSchedulerAgentApplicationTests 集成测试用例">
+      <option name="closed" value="true" />
+      <created>1760944052285</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1760944052285</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -380,6 +383,7 @@
     <MESSAGE value="feat(bridge): 实现ResourceBinding事件监听与上报功能&#10;&#10;- 移除BridgeApplication中的CommandLineRunner实现&#10;- 新增GlobalSchedulerClient用于向全局调度器发送事件&#10;- 创建TestController提供测试事件发送接口&#10;- 在BridgeServiceImpl中集成事件发送逻辑- 新增SchedulingEvent模型封装调度事件信息&#10;- 添加BridgeEventController处理接收的Bridge事件- 实现BridgeEventService及其实现类处理事件存储与查询&#10;- 更新ClusterController和SchedulingController的注释说明" />
     <MESSAGE value="refactor(core):重构项目结构并优化K8s客户端工具类&#10;&#10;- 创建scheduler-common和scheduler-pojo公共模块&#10;- 将K8sClientUtil移至scheduler-common并支持多集群连接缓存&#10;- 新增ClusterProperties和K8sClientProperties配置类&#10;- 重构Bridge和LocalSchedulerAgent模块依赖关系- 移除冗余的SchedulingEvent和ClusterStatus模型类- 优化HttpClientUtil工具类实现&#10;- 更新各模块pom.xml依赖配置&#10;- 调整application配置文件格式为yaml并统一配置结构" />
     <MESSAGE value="refactor(config):重构应用配置文件格式&#10;&#10;- 将 bridge 模块的 application.properties 配置移除&#10;- 将 global-scheduler 模块的配置文件从 properties 格式改为 yaml 格式- 保持 global-scheduler 的应用名称配置不变" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor(config):重构应用配置文件格式&#10;&#10;- 将 bridge 模块的 application.properties 配置移除&#10;- 将 global-scheduler 模块的配置文件从 properties 格式改为 yaml 格式- 保持 global-scheduler 的应用名称配置不变" />
+    <MESSAGE value="feat(lsa): 实现多集群状态采集与上报功能&#10;&#10;- 重构 application.yaml 配置结构，支持多个 kubeconfig 配置- 新增 ClusterMonitorService 接口及实现，负责连接测试与状态采集&#10;- 新增 GlobalSchedulerClient 用于向全局调度器上报集群状态&#10;- 修改 ClusterStatus 模型，增加节点数、Pod数等字段&#10;- 更新 ReportService 接口方法名并增强实现逻辑&#10;- 调整 ClusterProperties 配置类以适配新的 YAML 结构- 移除无用的 AppTest 测试类和 ClusterConfiguration 配置类&#10;- 增加 LocalSchedulerAgentApplicationTests 集成测试用例" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(lsa): 实现多集群状态采集与上报功能&#10;&#10;- 重构 application.yaml 配置结构，支持多个 kubeconfig 配置- 新增 ClusterMonitorService 接口及实现，负责连接测试与状态采集&#10;- 新增 GlobalSchedulerClient 用于向全局调度器上报集群状态&#10;- 修改 ClusterStatus 模型，增加节点数、Pod数等字段&#10;- 更新 ReportService 接口方法名并增强实现逻辑&#10;- 调整 ClusterProperties 配置类以适配新的 YAML 结构- 移除无用的 AppTest 测试类和 ClusterConfiguration 配置类&#10;- 增加 LocalSchedulerAgentApplicationTests 集成测试用例" />
   </component>
 </project>

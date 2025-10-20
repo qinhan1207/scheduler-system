@@ -61,16 +61,24 @@ public class ClusterMonitorServiceImpl implements ClusterMonitorService {
             double cpuUsage = Math.random() * 100;      // 临时随机值
             double memoryUsage = Math.random() * 100;   // 临时随机值
 
-            ClusterStatus status = new ClusterStatus(
-                    kubeconfigPath,
-                    nodeCount,
-                    podCount,
-                    cpuUsage,
-                    memoryUsage,
-                    Instant.now().toEpochMilli(),
-                    null,
-                    null
-            );
+//            ClusterStatus status = new ClusterStatus(
+//                    kubeconfigPath,
+//                    nodeCount,
+//                    podCount,
+//                    cpuUsage,
+//                    memoryUsage,
+//                    Instant.now().toEpochMilli(),
+//                    null,
+//                    null,
+//                    null
+//            );
+            ClusterStatus status = ClusterStatus.builder()
+                    .clusterName(kubeconfigPath)
+                    .nodeCount(nodeCount)
+                    .podCount(podCount)
+                    .cpuUsage(cpuUsage)
+                    .memoryUsage(memoryUsage)
+                    .timestamp(Instant.now().toEpochMilli()).build();
 
             log.info("📊 集群 [{}] 状态: 节点={}, Pods={}, CPU={}% MEM={}%",
                     kubeconfigPath, nodeCount, podCount,
