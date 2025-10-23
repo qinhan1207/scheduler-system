@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -54,24 +55,40 @@ public class ClusterMonitorServiceImpl implements ClusterMonitorService {
             V1NodeList nodes = api.listNode().execute();
             V1PodList pods = api.listPodForAllNamespaces().execute();
 
+
             int nodeCount = nodes.getItems().size();
             int podCount = pods.getItems().size();
 
             // TODO: 如果 metrics-server 存在，可进一步采集 CPU/内存
+//            // 🚨 固定值测试 - 消除随机性
+//            String clusterName = extractClusterName(kubeconfigPath);
+//
+//            // 为不同集群设置不同的固定值，便于观察调度逻辑
+//            Map<String, Double> fixedCpuMap = Map.of(
+//                    "kwok-cluster01", 30.0,
+//                    "kwok-cluster02", 60.0,
+//                    "cluster01", 40.0,
+//                    "cluster02", 50.0,
+//                    "cluster03", 70.0,
+//                    "cluster04", 20.0,  // 最低，应该被优先选择
+//                    "cluster05", 80.0
+//            );
+//
+//            Map<String, Double> fixedMemMap = Map.of(
+//                    "kwok-cluster01", 40.0,
+//                    "kwok-cluster02", 65.0,
+//                    "cluster01", 45.0,
+//                    "cluster02", 55.0,
+//                    "cluster03", 75.0,
+//                    "cluster04", 25.0,  // 最低，应该被优先选择
+//                    "cluster05", 85.0
+//            );
+
+//            double cpuUsage = fixedCpuMap.getOrDefault(clusterName, 50.0);
+//            double memoryUsage = fixedMemMap.getOrDefault(clusterName, 50.0);
             double cpuUsage = Math.random() * 100;      // 临时随机值
             double memoryUsage = Math.random() * 100;   // 临时随机值
 
-//            ClusterStatus status = new ClusterStatus(
-//                    kubeconfigPath,
-//                    nodeCount,
-//                    podCount,
-//                    cpuUsage,
-//                    memoryUsage,
-//                    Instant.now().toEpochMilli(),
-//                    null,
-//                    null,
-//                    null
-//            );
             ClusterStatus status = ClusterStatus.builder()
                     .clusterName(kubeconfigPath)
                     .nodeCount(nodeCount)
@@ -91,4 +108,27 @@ public class ClusterMonitorServiceImpl implements ClusterMonitorService {
             return null;
         }
     }
+
+    /**
+     * 从kubeconfig路径提取集群名称（简化版）
+     */
+//    private String extractClusterName(String kubeconfigPath) {
+//        try {
+//            // 简单处理：使用文件名或路径名作为集群名
+//            java.nio.file.Path path = java.nio.file.Paths.get(kubeconfigPath);
+//            String fileName = path.getFileName().toString();
+//
+//            if (fileName.equals("config") || fileName.equals("kubeconfig")) {
+//                // 如果是config文件，使用父目录名
+//                return path.getParent().getFileName().toString();
+//            } else {
+//                // 直接使用文件名（去掉扩展名）
+//                return fileName.replace(".config", "").replace("kubeconfig-", "");
+//            }
+//        } catch (Exception e) {
+//            // 如果解析失败，返回路径的hash作为标识
+//            return "cluster-" + Math.abs(kubeconfigPath.hashCode() % 1000);
+//        }
+//    }
+
 }

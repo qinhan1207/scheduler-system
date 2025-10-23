@@ -1,3 +1,5 @@
 spring:
   application:
     name: global-scheduler
+karmada:
+  kubeconfig: E:\karmada-config

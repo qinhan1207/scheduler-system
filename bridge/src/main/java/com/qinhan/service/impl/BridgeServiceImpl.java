@@ -16,8 +16,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.Map;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -32,6 +32,11 @@ public class BridgeServiceImpl implements BridgeService {
     @Autowired
     private GlobalSchedulerClient globalSchedulerClient;
 
+    private volatile boolean isInitialSync = true;
+
+    // 上次集群的信息
+    private final Map<String, List<String>> lastClusterCache = new ConcurrentHashMap<>();
+
     private volatile boolean watching = false;
     private Call watchCall;
 
@@ -43,6 +48,18 @@ public class BridgeServiceImpl implements BridgeService {
     @PostConstruct
     public void startWatch() {
         log.info("🚀 启动ResourceBinding监听器...");
+        // 🚨 设置初始同步标志
+        isInitialSync = true;
+        new Thread(() -> {
+            try {
+                // 等待一段时间后清除初始同步标志
+                Thread.sleep(10000); // 10秒后
+                isInitialSync = false;
+                log.info("✅ 初始同步完成，开始处理新事件");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
         new Thread(this::doWatch).start();
     }
 
@@ -77,9 +94,19 @@ public class BridgeServiceImpl implements BridgeService {
      * 核心监听逻辑 - 使用正确的Watch API
      */
     private void doWatch() {
+
+        // 添加启动延迟，避免立即处理历史事件
+        try {
+            log.info("⏳ Bridge启动延迟10秒，等待系统稳定...");
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return;
+        }
         watching = true;
 
         try {
+            // 初始化客户端
             ApiClient client = k8sClientUtil.getClient(kubeconfigPath);
             CustomObjectsApi api = new CustomObjectsApi(client);
 
@@ -88,6 +115,7 @@ public class BridgeServiceImpl implements BridgeService {
             while (watching) {
                 try {
                     log.info("🔄 创建新的Watch连接...");
+                    // 创建一个监听k8s资源变化的Watch对象
                     Watch<Object> watch = createWatch(api);
                     log.info("✅ Watch连接创建成功，开始监听事件...");
 
@@ -185,17 +213,136 @@ public class BridgeServiceImpl implements BridgeService {
     private void handleResourceBindingEvent(Map<String, Object> rbObject, String eventType) {
         try {
             SchedulingEvent event = parseResourceBinding(rbObject, eventType);
-            log.info("🎯 监听到ResourceBinding事件: {} - {}/{} - 目标集群: {} - 调度状态: {}",
-                    event.getEventType(),
-                    event.getNamespace(),
-                    event.getName(),
-                    event.getTargetClusters(),
-                    event.isScheduled());
+
+//            String resourceKey = event.getNamespace() + "/" + event.getName();
+//            // 🚨 精确判断：只有集群配置真正变化时才处理
+//            if (shouldSkipEventPrecise(event, rbObject, resourceKey)) {
+//                if (log.isTraceEnabled()) { // 🚨 使用TRACE级别避免日志洪水
+//                    log.trace("⏭️ 跳过非关键事件: {}/{} - 类型: {}",
+//                            event.getNamespace(), event.getName(), event.getEventType());
+//                }
+//                return;
+//            }
+
+            // 🚨 跳过启动时的历史资源同步
+            if (isInitialSync && "ADDED".equals(eventType)) {
+                log.info("⏭️ 跳过启动同步事件: {}/{}", event.getNamespace(), event.getName());
+                return;
+            }
+
+            // 🚨 只处理ADDED事件，完全忽略MODIFIED事件
+            if (!"ADDED".equals(eventType)) {
+                if (log.isTraceEnabled()) {
+                    log.trace("⏭️ 跳过MODIFIED事件: {}/{} - 类型: {}",
+                            event.getNamespace(), event.getName(), eventType);
+                }
+                return;
+            }
+
+            if (log.isInfoEnabled()) {
+                log.info("🎯 ResourceBinding事件: [{}] {}/{} -> clusters={} 状态={}",
+                        event.getEventType(),
+                        event.getNamespace(),
+                        event.getName(),
+                        event.getTargetClusters(),
+                        event.isScheduled());
+            }
 
             // 发送给GS
             sendToGlobalScheduler(event);
         } catch (Exception e) {
             log.error("❌ 处理ResourceBinding事件失败", e);
+        }
+    }
+
+    /**
+     * 精确判断是否应该跳过事件
+     */
+    private boolean shouldSkipEventPrecise(SchedulingEvent event, Map<String, Object> rbObject, String resourceKey) {
+        // 1. 总是处理ADDED事件（新资源）
+        if ("ADDED".equalsIgnoreCase(event.getEventType())) {
+            updateClusterCache(resourceKey, event.getTargetClusters());
+            return false;
+        }
+
+        // 2. 对于MODIFIED事件，只处理集群配置真实变化的情况
+        if ("MODIFIED".equalsIgnoreCase(event.getEventType())) {
+            return !isRealClusterChange(event, rbObject, resourceKey);
+        }
+
+        // 3. 跳过DELETED和其他事件
+        return true;
+    }
+
+    /**
+     * 检查集群配置是否真的发生了变化
+     */
+    private boolean isRealClusterChange(SchedulingEvent event, Map<String, Object> rbObject, String resourceKey) {
+        try {
+            // 获取当前的集群配置
+            List<String> currentClusters = event.getTargetClusters();
+            if (currentClusters == null) {
+                return false;
+            }
+
+            // 获取上一次的集群配置
+            List<String> lastClusters = lastClusterCache.get(resourceKey);
+
+            // 如果是第一次见到该资源，记录并处理
+            if (lastClusters == null) {
+                updateClusterCache(resourceKey, currentClusters);
+                return true;
+            }
+
+            // 🚨 精确比较：集群列表是否真的变化
+            boolean clustersChanged = !isSameClusterList(lastClusters, currentClusters);
+
+            if (clustersChanged) {
+                log.info("🔍 检测到集群配置变化: {} -> {}", lastClusters, currentClusters);
+                updateClusterCache(resourceKey, currentClusters);
+                return true;
+            } else {
+                // 集群配置未变化，只是状态更新，跳过
+                if (log.isDebugEnabled()) {
+                    log.debug("⏭️ 集群配置未变化，跳过状态更新: {}", resourceKey);
+                }
+                return false;
+            }
+
+        } catch (Exception e) {
+            log.warn("❌ 集群变化检测失败，保守处理: 跳过事件", e);
+            return false;
+        }
+    }
+
+    /**
+     * 比较两个集群列表是否相同（顺序无关）
+     */
+    private boolean isSameClusterList(List<String> list1, List<String> list2) {
+        if (list1 == null && list2 == null) return true;
+        if (list1 == null || list2 == null) return false;
+        if (list1.size() != list2.size()) return false;
+
+        return new HashSet<>(list1).equals(new HashSet<>(list2));
+    }
+
+    /**
+     * 更新集群配置缓存
+     */
+    private void updateClusterCache(String resourceKey, List<String> clusters) {
+        if (clusters != null) {
+            lastClusterCache.put(resourceKey, new ArrayList<>(clusters));
+
+            // 🚨 限制缓存大小，避免内存泄漏
+            if (lastClusterCache.size() > 1000) {
+                // 简单的LRU策略：移除最早的一些条目
+                Iterator<String> it = lastClusterCache.keySet().iterator();
+                int toRemove = lastClusterCache.size() - 800;
+                for (int i = 0; i < toRemove && it.hasNext(); i++) {
+                    it.next();
+                    it.remove();
+                }
+            }
         }
     }
 

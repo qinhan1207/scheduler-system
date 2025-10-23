@@ -20,15 +20,15 @@ public class BridgeEventController {
     private BridgeEventService bridgeEventService;
 
     /**
-     * 接收Bridge上报的ResourceBinding事件
+     * 接收Bridge上报的ResourceBinding事件并进行处理
      */
     @PostMapping("/events")
     public String handleBridgeEvent(@RequestBody SchedulingEvent event) {
-        log.info("📥 收到Bridge ResourceBinding事件: {} - {}/{}", 
+        log.info("📥 收到Bridge ResourceBinding事件: {} - {}/{}",
                 event.getEventType(), event.getNamespace(), event.getName());
-        
+
         bridgeEventService.processBridgeEvent(event);
-        
+
         return "✅ Bridge事件处理完成: " + event.getName();
     }
 

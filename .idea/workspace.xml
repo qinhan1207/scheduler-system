@@ -4,12 +4,22 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(cluster): 实现集群健康评估与选择机制&#10;&#10;- 引入 ClusterSelector 类用于根据健康分值选择最优集群&#10;- 在 ClusterStatus 中新增 healthScore 字段用于量化健康状态&#10;- 创建 HealthEvaluator 工具类实现健康等级与分值计算逻辑&#10;- 为 ClusterStatus 添加 @Builder 注解并调整构造方式- 在 ClusterServiceImpl 中实现定期健康评估任务&#10;- global-scheduler 模块引入 scheduler-common 依赖以支持健康评估功能&#10;- 扩展 ClusterService 接口，增加获取全部集群状态的方法&#10;- 优化 ClusterMonitorServiceImpl 中的状态构建方式，使用建造者模式替代构造函数">
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/decision/GlobalDecisionEngine.java" afterDir="false" />
+    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(bridge): 配置 kubeconfig 路径并修正调度器端口&#10;&#10;- 在 application.yaml 中添加 kubeconfig 路径配置项&#10;- 修正 global scheduler 的 URL 端口号错误（80800 -&gt;8080）&#10;&#10;feat(global-scheduler): 引入全局调度决策引擎并优化健康分计算&#10;&#10;- 新增 GlobalDecisionEngine 类，实现调度事件评估逻辑&#10;- 在 BridgeEventServiceImpl 中调用全局决策引擎进行调度分析&#10;-修复 ClusterServiceImpl 中健康分设置错误的方法调用&#10;- 添加决策引擎对 Karmada 原生调度结果的对比功能&#10;- 实现基于健康分值的最优集群选择建议机制">
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/config/KarmadaClientConfig.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/BindingUpdaterService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/BindingUpdaterServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/ScheduleDecision.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bridge/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/impl/BridgeServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/impl/BridgeServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/BridgeEventController.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/BridgeEventController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/decision/GlobalDecisionEngine.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/decision/GlobalDecisionEngine.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/BridgeEventServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/BridgeEventServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/ClusterServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/ClusterServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ClusterMonitorServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ClusterMonitorServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/properties/ClusterProperties.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/properties/ClusterProperties.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/ClusterStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/ClusterStatus.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/SchedulingEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/SchedulingEvent.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -58,45 +68,45 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "JUnit.K8sConnectionTest.executor": "Run",
-    "JUnit.LocalSchedulerAgentApplicationTests.run (1).executor": "Run",
-    "JUnit.LocalSchedulerAgentApplicationTests.run.executor": "Run",
-    "JUnit.LocalSchedulerAgentApplicationTests.testCollectClusterStatus.executor": "Run",
-    "Maven. [org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate].executor": "Run",
-    "Maven.bridge [clean].executor": "Run",
-    "Maven.bridge [compile].executor": "Run",
-    "Maven.bridge [install].executor": "Run",
-    "Maven.scheduler-system [clean].executor": "Run",
-    "Maven.scheduler-system [compile].executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RequestMappingsPanelOrder0": "0",
-    "RequestMappingsPanelOrder1": "1",
-    "RequestMappingsPanelWidth0": "75",
-    "RequestMappingsPanelWidth1": "75",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "Spring Boot.BridgeApplication.executor": "Run",
-    "Spring Boot.GlobalSchedulerApplication.executor": "Run",
-    "Spring Boot.LocalSchedulerAgentApplication.executor": "Run",
-    "git-widget-placeholder": "main",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "D:/code/back/scheduler-system/scheduler-pojo/src/main/java/com/qinhan/model",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Project",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "run.configurations.included.in.services": "true",
-    "settings.editor.selected.configurable": "preferences.lookFeel",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;JUnit.K8sConnectionTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.LocalSchedulerAgentApplicationTests.run (1).executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.LocalSchedulerAgentApplicationTests.run.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.LocalSchedulerAgentApplicationTests.testCollectClusterStatus.executor&quot;: &quot;Run&quot;,
+    &quot;Maven. [org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.bridge [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.bridge [compile].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.bridge [install].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.scheduler-system [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.scheduler-system [compile].executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;Spring Boot.BridgeApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.GlobalSchedulerApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.LocalSchedulerAgentApplication.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/code/back/scheduler-system/scheduler-pojo/src/main/java/com/qinhan/model&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;run.configurations.included.in.services&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CreateClassDialog.RecentsKey">
       <recent name="com.qinhan.service" />
@@ -217,6 +227,15 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <list>
+      <item itemvalue="JUnit.K8sConnectionTest" />
+      <item itemvalue="JUnit.LocalSchedulerAgentApplicationTests.run" />
+      <item itemvalue="JUnit.LocalSchedulerAgentApplicationTests.run (1)" />
+      <item itemvalue="JUnit.LocalSchedulerAgentApplicationTests.testCollectClusterStatus" />
+      <item itemvalue="Spring Boot.BridgeApplication" />
+      <item itemvalue="Spring Boot.GlobalSchedulerApplication" />
+      <item itemvalue="Spring Boot.LocalSchedulerAgentApplication" />
+    </list>
     <recent_temporary>
       <list>
         <item itemvalue="JUnit.LocalSchedulerAgentApplicationTests.testCollectClusterStatus" />
@@ -259,7 +278,15 @@
       <workItem from="1760527180170" duration="10000" />
       <workItem from="1760591330617" duration="11188000" />
       <workItem from="1760681350321" duration="12598000" />
-      <workItem from="1760935355420" duration="13140000" />
+      <workItem from="1760935355420" duration="13794000" />
+      <workItem from="1760961455032" duration="33000" />
+      <workItem from="1760969502522" duration="12000" />
+      <workItem from="1761017691776" duration="139000" />
+      <workItem from="1761017839794" duration="16086000" />
+      <workItem from="1761054728280" duration="364000" />
+      <workItem from="1761107307814" duration="15182000" />
+      <workItem from="1761141735966" duration="779000" />
+      <workItem from="1761204996300" duration="1290000" />
     </task>
     <task id="LOCAL-00001" summary="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构">
       <option name="closed" value="true" />
@@ -349,7 +376,15 @@
       <option name="project" value="LOCAL" />
       <updated>1760948091971</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="feat(bridge): 配置 kubeconfig 路径并修正调度器端口&#10;&#10;- 在 application.yaml 中添加 kubeconfig 路径配置项&#10;- 修正 global scheduler 的 URL 端口号错误（80800 -&gt;8080）&#10;&#10;feat(global-scheduler): 引入全局调度决策引擎并优化健康分计算&#10;&#10;- 新增 GlobalDecisionEngine 类，实现调度事件评估逻辑&#10;- 在 BridgeEventServiceImpl 中调用全局决策引擎进行调度分析&#10;-修复 ClusterServiceImpl 中健康分设置错误的方法调用&#10;- 添加决策引擎对 Karmada 原生调度结果的对比功能&#10;- 实现基于健康分值的最优集群选择建议机制">
+      <option name="closed" value="true" />
+      <created>1760953068022</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1760953068022</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -390,6 +425,7 @@
     <MESSAGE value="refactor(config):重构应用配置文件格式&#10;&#10;- 将 bridge 模块的 application.properties 配置移除&#10;- 将 global-scheduler 模块的配置文件从 properties 格式改为 yaml 格式- 保持 global-scheduler 的应用名称配置不变" />
     <MESSAGE value="feat(lsa): 实现多集群状态采集与上报功能&#10;&#10;- 重构 application.yaml 配置结构，支持多个 kubeconfig 配置- 新增 ClusterMonitorService 接口及实现，负责连接测试与状态采集&#10;- 新增 GlobalSchedulerClient 用于向全局调度器上报集群状态&#10;- 修改 ClusterStatus 模型，增加节点数、Pod数等字段&#10;- 更新 ReportService 接口方法名并增强实现逻辑&#10;- 调整 ClusterProperties 配置类以适配新的 YAML 结构- 移除无用的 AppTest 测试类和 ClusterConfiguration 配置类&#10;- 增加 LocalSchedulerAgentApplicationTests 集成测试用例" />
     <MESSAGE value="feat(cluster): 实现集群健康评估与选择机制&#10;&#10;- 引入 ClusterSelector 类用于根据健康分值选择最优集群&#10;- 在 ClusterStatus 中新增 healthScore 字段用于量化健康状态&#10;- 创建 HealthEvaluator 工具类实现健康等级与分值计算逻辑&#10;- 为 ClusterStatus 添加 @Builder 注解并调整构造方式- 在 ClusterServiceImpl 中实现定期健康评估任务&#10;- global-scheduler 模块引入 scheduler-common 依赖以支持健康评估功能&#10;- 扩展 ClusterService 接口，增加获取全部集群状态的方法&#10;- 优化 ClusterMonitorServiceImpl 中的状态构建方式，使用建造者模式替代构造函数" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(cluster): 实现集群健康评估与选择机制&#10;&#10;- 引入 ClusterSelector 类用于根据健康分值选择最优集群&#10;- 在 ClusterStatus 中新增 healthScore 字段用于量化健康状态&#10;- 创建 HealthEvaluator 工具类实现健康等级与分值计算逻辑&#10;- 为 ClusterStatus 添加 @Builder 注解并调整构造方式- 在 ClusterServiceImpl 中实现定期健康评估任务&#10;- global-scheduler 模块引入 scheduler-common 依赖以支持健康评估功能&#10;- 扩展 ClusterService 接口，增加获取全部集群状态的方法&#10;- 优化 ClusterMonitorServiceImpl 中的状态构建方式，使用建造者模式替代构造函数" />
+    <MESSAGE value="feat(bridge): 配置 kubeconfig 路径并修正调度器端口&#10;&#10;- 在 application.yaml 中添加 kubeconfig 路径配置项&#10;- 修正 global scheduler 的 URL 端口号错误（80800 -&gt;8080）&#10;&#10;feat(global-scheduler): 引入全局调度决策引擎并优化健康分计算&#10;&#10;- 新增 GlobalDecisionEngine 类，实现调度事件评估逻辑&#10;- 在 BridgeEventServiceImpl 中调用全局决策引擎进行调度分析&#10;-修复 ClusterServiceImpl 中健康分设置错误的方法调用&#10;- 添加决策引擎对 Karmada 原生调度结果的对比功能&#10;- 实现基于健康分值的最优集群选择建议机制" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(bridge): 配置 kubeconfig 路径并修正调度器端口&#10;&#10;- 在 application.yaml 中添加 kubeconfig 路径配置项&#10;- 修正 global scheduler 的 URL 端口号错误（80800 -&gt;8080）&#10;&#10;feat(global-scheduler): 引入全局调度决策引擎并优化健康分计算&#10;&#10;- 新增 GlobalDecisionEngine 类，实现调度事件评估逻辑&#10;- 在 BridgeEventServiceImpl 中调用全局决策引擎进行调度分析&#10;-修复 ClusterServiceImpl 中健康分设置错误的方法调用&#10;- 添加决策引擎对 Karmada 原生调度结果的对比功能&#10;- 实现基于健康分值的最优集群选择建议机制" />
   </component>
 </project>

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 
 /**
+ * LSA模块上报的集群状态信息
  * ClusterStatus 表示单个成员集群的运行状态信息
  * 由 Local Scheduler Agent (LSA) 周期性上报给 Global Scheduler (GC)
  */

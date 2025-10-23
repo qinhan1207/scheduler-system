@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
+ * Bridge模块从Karmada监听到的事件
  * 用于封装监听到的 ResourceBinding 事件
  */
 @Data

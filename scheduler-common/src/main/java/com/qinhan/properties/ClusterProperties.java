@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
+ * LSA多集群配置
  * 从 application.yml 读取 LSA 多集群配置信息
  */
 @Data
