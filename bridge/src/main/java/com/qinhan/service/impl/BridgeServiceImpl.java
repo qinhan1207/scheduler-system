@@ -34,8 +34,6 @@ public class BridgeServiceImpl implements BridgeService {
 
     private volatile boolean isInitialSync = true;
 
-    // 上次集群的信息
-    private final Map<String, List<String>> lastClusterCache = new ConcurrentHashMap<>();
 
     private volatile boolean watching = false;
     private Call watchCall;
@@ -214,15 +212,6 @@ public class BridgeServiceImpl implements BridgeService {
         try {
             SchedulingEvent event = parseResourceBinding(rbObject, eventType);
 
-//            String resourceKey = event.getNamespace() + "/" + event.getName();
-//            // 🚨 精确判断：只有集群配置真正变化时才处理
-//            if (shouldSkipEventPrecise(event, rbObject, resourceKey)) {
-//                if (log.isTraceEnabled()) { // 🚨 使用TRACE级别避免日志洪水
-//                    log.trace("⏭️ 跳过非关键事件: {}/{} - 类型: {}",
-//                            event.getNamespace(), event.getName(), event.getEventType());
-//                }
-//                return;
-//            }
 
             // 🚨 跳过启动时的历史资源同步
             if (isInitialSync && "ADDED".equals(eventType)) {
@@ -252,97 +241,6 @@ public class BridgeServiceImpl implements BridgeService {
             sendToGlobalScheduler(event);
         } catch (Exception e) {
             log.error("❌ 处理ResourceBinding事件失败", e);
-        }
-    }
-
-    /**
-     * 精确判断是否应该跳过事件
-     */
-    private boolean shouldSkipEventPrecise(SchedulingEvent event, Map<String, Object> rbObject, String resourceKey) {
-        // 1. 总是处理ADDED事件（新资源）
-        if ("ADDED".equalsIgnoreCase(event.getEventType())) {
-            updateClusterCache(resourceKey, event.getTargetClusters());
-            return false;
-        }
-
-        // 2. 对于MODIFIED事件，只处理集群配置真实变化的情况
-        if ("MODIFIED".equalsIgnoreCase(event.getEventType())) {
-            return !isRealClusterChange(event, rbObject, resourceKey);
-        }
-
-        // 3. 跳过DELETED和其他事件
-        return true;
-    }
-
-    /**
-     * 检查集群配置是否真的发生了变化
-     */
-    private boolean isRealClusterChange(SchedulingEvent event, Map<String, Object> rbObject, String resourceKey) {
-        try {
-            // 获取当前的集群配置
-            List<String> currentClusters = event.getTargetClusters();
-            if (currentClusters == null) {
-                return false;
-            }
-
-            // 获取上一次的集群配置
-            List<String> lastClusters = lastClusterCache.get(resourceKey);
-
-            // 如果是第一次见到该资源，记录并处理
-            if (lastClusters == null) {
-                updateClusterCache(resourceKey, currentClusters);
-                return true;
-            }
-
-            // 🚨 精确比较：集群列表是否真的变化
-            boolean clustersChanged = !isSameClusterList(lastClusters, currentClusters);
-
-            if (clustersChanged) {
-                log.info("🔍 检测到集群配置变化: {} -> {}", lastClusters, currentClusters);
-                updateClusterCache(resourceKey, currentClusters);
-                return true;
-            } else {
-                // 集群配置未变化，只是状态更新，跳过
-                if (log.isDebugEnabled()) {
-                    log.debug("⏭️ 集群配置未变化，跳过状态更新: {}", resourceKey);
-                }
-                return false;
-            }
-
-        } catch (Exception e) {
-            log.warn("❌ 集群变化检测失败，保守处理: 跳过事件", e);
-            return false;
-        }
-    }
-
-    /**
-     * 比较两个集群列表是否相同（顺序无关）
-     */
-    private boolean isSameClusterList(List<String> list1, List<String> list2) {
-        if (list1 == null && list2 == null) return true;
-        if (list1 == null || list2 == null) return false;
-        if (list1.size() != list2.size()) return false;
-
-        return new HashSet<>(list1).equals(new HashSet<>(list2));
-    }
-
-    /**
-     * 更新集群配置缓存
-     */
-    private void updateClusterCache(String resourceKey, List<String> clusters) {
-        if (clusters != null) {
-            lastClusterCache.put(resourceKey, new ArrayList<>(clusters));
-
-            // 🚨 限制缓存大小，避免内存泄漏
-            if (lastClusterCache.size() > 1000) {
-                // 简单的LRU策略：移除最早的一些条目
-                Iterator<String> it = lastClusterCache.keySet().iterator();
-                int toRemove = lastClusterCache.size() - 800;
-                for (int i = 0; i < toRemove && it.hasNext(); i++) {
-                    it.next();
-                    it.remove();
-                }
-            }
         }
     }
 

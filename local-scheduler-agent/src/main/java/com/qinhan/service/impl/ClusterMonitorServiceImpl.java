@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -60,32 +59,6 @@ public class ClusterMonitorServiceImpl implements ClusterMonitorService {
             int podCount = pods.getItems().size();
 
             // TODO: 如果 metrics-server 存在，可进一步采集 CPU/内存
-//            // 🚨 固定值测试 - 消除随机性
-//            String clusterName = extractClusterName(kubeconfigPath);
-//
-//            // 为不同集群设置不同的固定值，便于观察调度逻辑
-//            Map<String, Double> fixedCpuMap = Map.of(
-//                    "kwok-cluster01", 30.0,
-//                    "kwok-cluster02", 60.0,
-//                    "cluster01", 40.0,
-//                    "cluster02", 50.0,
-//                    "cluster03", 70.0,
-//                    "cluster04", 20.0,  // 最低，应该被优先选择
-//                    "cluster05", 80.0
-//            );
-//
-//            Map<String, Double> fixedMemMap = Map.of(
-//                    "kwok-cluster01", 40.0,
-//                    "kwok-cluster02", 65.0,
-//                    "cluster01", 45.0,
-//                    "cluster02", 55.0,
-//                    "cluster03", 75.0,
-//                    "cluster04", 25.0,  // 最低，应该被优先选择
-//                    "cluster05", 85.0
-//            );
-
-//            double cpuUsage = fixedCpuMap.getOrDefault(clusterName, 50.0);
-//            double memoryUsage = fixedMemMap.getOrDefault(clusterName, 50.0);
             double cpuUsage = Math.random() * 100;      // 临时随机值
             double memoryUsage = Math.random() * 100;   // 临时随机值
 

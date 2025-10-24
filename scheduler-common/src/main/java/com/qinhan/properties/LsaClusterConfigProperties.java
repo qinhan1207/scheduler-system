@@ -3,7 +3,6 @@ package com.qinhan.properties;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -14,7 +13,7 @@ import java.util.List;
 @Data
 @Configuration
 @ConfigurationProperties(prefix = "lsa.clusters")
-public class ClusterProperties {
+public class LsaClusterConfigProperties {
 
     private List<ClusterConfig> configs;
 

@@ -5,7 +5,7 @@ import com.qinhan.model.ClusterStatus;
 
 import java.util.List;
 
-public interface ClusterService {
+public interface MemberClusterService {
 
     /**
      * 更新集群状态

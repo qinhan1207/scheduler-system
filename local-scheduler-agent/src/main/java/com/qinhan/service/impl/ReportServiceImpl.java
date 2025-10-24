@@ -2,7 +2,7 @@ package com.qinhan.service.impl;
 
 import com.qinhan.client.GlobalSchedulerClient;
 import com.qinhan.model.ClusterStatus;
-import com.qinhan.properties.ClusterProperties;
+import com.qinhan.properties.LsaClusterConfigProperties;
 import com.qinhan.service.ClusterMonitorService;
 import com.qinhan.service.ReportService;
 import lombok.extern.slf4j.Slf4j;
@@ -14,14 +14,14 @@ import org.springframework.stereotype.Service;
 public class ReportServiceImpl implements ReportService {
 
     private final ClusterMonitorService clusterMonitorService;
-    private final ClusterProperties clusterProperties;
+    private final LsaClusterConfigProperties lsaClusterConfigProperties;
     private final GlobalSchedulerClient globalSchedulerClient;
 
     public ReportServiceImpl(ClusterMonitorService clusterMonitorService,
-                             ClusterProperties clusterProperties,
+                             LsaClusterConfigProperties lsaClusterConfigProperties,
                              GlobalSchedulerClient globalSchedulerClient) {
         this.clusterMonitorService = clusterMonitorService;
-        this.clusterProperties = clusterProperties;
+        this.lsaClusterConfigProperties = lsaClusterConfigProperties;
         this.globalSchedulerClient = globalSchedulerClient;
     }
 
@@ -33,7 +33,7 @@ public class ReportServiceImpl implements ReportService {
     public void reportAllClusters() {
         log.info("🛰️ 开始采集并上报所有集群状态...");
 
-        clusterProperties.getConfigs().parallelStream().forEach(config -> {
+        lsaClusterConfigProperties.getConfigs().parallelStream().forEach(config -> {
             try {
                 ClusterStatus status = clusterMonitorService.collectClusterStatus(config.getKubeconfigPath());
                 if (status != null) {

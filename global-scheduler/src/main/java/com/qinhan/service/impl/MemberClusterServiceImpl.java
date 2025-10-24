@@ -1,7 +1,7 @@
 package com.qinhan.service.impl;
 
 import com.qinhan.model.ClusterStatus;
-import com.qinhan.service.ClusterService;
+import com.qinhan.service.MemberClusterService;
 import com.qinhan.util.HealthEvaluator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
-public class ClusterServiceImpl implements ClusterService {
+public class MemberClusterServiceImpl implements MemberClusterService {
 
     private final ConcurrentHashMap<String, ClusterStatus> clusterMap = new ConcurrentHashMap<>();
 

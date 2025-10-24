@@ -2,7 +2,7 @@ package com.qinhan.controller;
 
 
 import com.qinhan.model.ClusterStatus;
-import com.qinhan.service.ClusterService;
+import com.qinhan.service.MemberClusterService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -10,15 +10,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 管理与展示各个集群的状态信息
+ * 管理与展示各个成员集群的状态信息
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/clusters")
-public class ClusterController {
+public class MemberClusterController {
 
     @Autowired
-    private ClusterService clusterService;
+    private MemberClusterService memberClusterService;
 
     /**
      * 接收上报的数据
@@ -28,7 +28,7 @@ public class ClusterController {
     @PostMapping("/report")
     public String reportStatus(@RequestBody ClusterStatus status) {
         log.info("接收上报的数据:{}",status);
-        clusterService.updateClusterStatus(status);
+        memberClusterService.updateClusterStatus(status);
         return "✅ Received status from cluster: " + status.getClusterName();
     }
 
@@ -36,6 +36,6 @@ public class ClusterController {
     @GetMapping("/all")
     public List<ClusterStatus> getAllStatus() {
         log.info("查看所有集群状态");
-        return clusterService.getAllClusterStatus();
+        return memberClusterService.getAllClusterStatus();
     }
 }

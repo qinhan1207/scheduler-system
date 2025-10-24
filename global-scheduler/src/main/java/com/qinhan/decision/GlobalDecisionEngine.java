@@ -3,10 +3,8 @@ package com.qinhan.decision;
 import com.qinhan.model.ClusterStatus;
 import com.qinhan.model.ScheduleDecision;
 import com.qinhan.model.SchedulingEvent;
-import com.qinhan.service.BindingUpdaterService;
-import com.qinhan.service.ClusterService;
+import com.qinhan.service.MemberClusterService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
@@ -25,10 +23,10 @@ import java.util.Optional;
 @Component
 public class GlobalDecisionEngine {
 
-    private final ClusterService clusterService;
+    private final MemberClusterService memberClusterService;
 
-    public GlobalDecisionEngine(ClusterService clusterService) {
-        this.clusterService = clusterService;
+    public GlobalDecisionEngine(MemberClusterService memberClusterService) {
+        this.memberClusterService = memberClusterService;
     }
 
     /**
@@ -43,7 +41,7 @@ public class GlobalDecisionEngine {
                 .reason("初始状态");
 
         try {
-            List<ClusterStatus> allClusters = clusterService.getAllClusterStatus();
+            List<ClusterStatus> allClusters = memberClusterService.getAllClusterStatus();
 
             if (allClusters.isEmpty()) {
                 builder.reason("⚠\uFE0F 当前无集群状态数据");

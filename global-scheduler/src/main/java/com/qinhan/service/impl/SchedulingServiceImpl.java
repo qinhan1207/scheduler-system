@@ -3,7 +3,7 @@ package com.qinhan.service.impl;
 import com.qinhan.model.ClusterStatus;
 import com.qinhan.model.SchedulingRequest;
 import com.qinhan.model.SchedulingResponse;
-import com.qinhan.service.ClusterService;
+import com.qinhan.service.MemberClusterService;
 import com.qinhan.service.SchedulingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,15 +16,15 @@ import java.util.Optional;
 @Slf4j
 public class SchedulingServiceImpl implements SchedulingService {
 
-    private final ClusterService clusterService;
+    private final MemberClusterService memberClusterService;
 
-    public SchedulingServiceImpl(ClusterService clusterService) {
-        this.clusterService = clusterService;
+    public SchedulingServiceImpl(MemberClusterService memberClusterService) {
+        this.memberClusterService = memberClusterService;
     }
 
     @Override
     public SchedulingResponse selectBestCluster(SchedulingRequest request) {
-        List<ClusterStatus> clusters = clusterService.getAllClusterStatus();
+        List<ClusterStatus> clusters = memberClusterService.getAllClusterStatus();
         if (clusters == null || clusters.isEmpty()) {
             return new SchedulingResponse(null, 0.0, "no-clusters-available");
         }

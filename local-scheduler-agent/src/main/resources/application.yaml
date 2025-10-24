@@ -8,15 +8,15 @@ server:
 lsa:
   clusters:
     configs:
-      - name: cluster01
+      - name: kwok-cluster01
         kubeconfigPath: E:\kubeconfig\my-kubeconfig-01.yaml
-      - name: cluster02
+      - name: kwok-cluster02
         kubeconfigPath: E:\kubeconfig\my-kubeconfig-02.yaml
-      - name: cluster03
+      - name: kwok-cluster03
         kubeconfigPath: E:\kubeconfig\my-kubeconfig-03.yaml
-      - name: cluster04
+      - name: kwok-cluster04
         kubeconfigPath: E:\kubeconfig\my-kubeconfig-04.yaml
-      - name: cluster05
+      - name: kwok-cluster05
         kubeconfigPath: E:\kubeconfig\my-kubeconfig-05.yaml
       # 如果是 kwok 模拟环境，也可以使用共享配置
       # - name: karmada-kwok-01

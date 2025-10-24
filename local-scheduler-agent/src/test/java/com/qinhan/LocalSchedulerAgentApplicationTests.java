@@ -1,6 +1,6 @@
 package com.qinhan;
 
-import com.qinhan.properties.ClusterProperties;
+import com.qinhan.properties.LsaClusterConfigProperties;
 import com.qinhan.service.ClusterMonitorService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -12,7 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 class LocalSchedulerAgentApplicationTests {
 
     @Autowired
-    private ClusterProperties clusterProperties;
+    private LsaClusterConfigProperties lsaClusterConfigProperties;
 
     @Autowired
     private ClusterMonitorService clusterMonitorService;
@@ -25,7 +25,7 @@ class LocalSchedulerAgentApplicationTests {
     public void run() throws Exception {
         log.info("🚀 启动 LSA 集群连接测试...");
 
-        clusterProperties.getConfigs().parallelStream().forEach(config -> {
+        lsaClusterConfigProperties.getConfigs().parallelStream().forEach(config -> {
             try {
                 clusterMonitorService.testClusterConnection(config.getKubeconfigPath());
             } catch (Exception e) {
@@ -40,7 +40,7 @@ class LocalSchedulerAgentApplicationTests {
     public void testCollectClusterStatus(){
         log.info("测试成员集群信息的收集...");
 
-        clusterProperties.getConfigs().parallelStream().forEach(config -> {
+        lsaClusterConfigProperties.getConfigs().parallelStream().forEach(config -> {
             try {
                 clusterMonitorService.collectClusterStatus(config.getKubeconfigPath());
             } catch (Exception e) {
