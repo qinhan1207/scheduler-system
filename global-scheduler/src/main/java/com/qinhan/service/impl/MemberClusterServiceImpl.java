@@ -2,7 +2,9 @@ package com.qinhan.service.impl;
 
 import com.qinhan.model.ClusterStatus;
 import com.qinhan.service.MemberClusterService;
+import com.qinhan.service.ResourceSimulatorService;
 import com.qinhan.util.HealthEvaluator;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -13,7 +15,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class MemberClusterServiceImpl implements MemberClusterService {
+
+    private final ResourceSimulatorService resourceSimulatorService;
 
     private final ConcurrentHashMap<String, ClusterStatus> clusterMap = new ConcurrentHashMap<>();
 
@@ -22,6 +27,7 @@ public class MemberClusterServiceImpl implements MemberClusterService {
      */
     @Override
     public void updateClusterStatus(ClusterStatus status) {
+        status = resourceSimulatorService.enrichDynamicMetrics(status);
         // 计算集群健康状态
         String healthStatus = HealthEvaluator.evaluate(status);
         status.setHealthStatus(healthStatus);

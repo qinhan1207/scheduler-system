@@ -8,11 +8,13 @@
         <option value="$PROJECT_DIR$/global-scheduler/pom.xml" />
         <option value="$PROJECT_DIR$/local-scheduler-agent/pom.xml" />
         <option value="$PROJECT_DIR$/bridge/pom.xml" />
+        <option value="$PROJECT_DIR$/scheduler-simulator/pom.xml" />
       </list>
     </option>
     <option name="ignoredFiles">
       <set>
         <option value="$PROJECT_DIR$/bridge/pom.xml" />
+        <option value="$PROJECT_DIR$/scheduler-simulator/pom.xml" />
       </set>
     </option>
   </component>

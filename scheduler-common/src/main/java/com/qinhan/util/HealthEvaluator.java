@@ -24,7 +24,6 @@ public class HealthEvaluator {
 
     /**
      * 根据 CPU 与内存使用率计算健康等级
-     *
      * @param status 集群状态对象
      * @return 返回 "Healthy" / "Warning" / "Critical"
      */
