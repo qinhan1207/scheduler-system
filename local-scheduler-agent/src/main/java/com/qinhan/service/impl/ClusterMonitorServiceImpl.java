@@ -82,26 +82,4 @@ public class ClusterMonitorServiceImpl implements ClusterMonitorService {
         }
     }
 
-    /**
-     * 从kubeconfig路径提取集群名称（简化版）
-     */
-//    private String extractClusterName(String kubeconfigPath) {
-//        try {
-//            // 简单处理：使用文件名或路径名作为集群名
-//            java.nio.file.Path path = java.nio.file.Paths.get(kubeconfigPath);
-//            String fileName = path.getFileName().toString();
-//
-//            if (fileName.equals("config") || fileName.equals("kubeconfig")) {
-//                // 如果是config文件，使用父目录名
-//                return path.getParent().getFileName().toString();
-//            } else {
-//                // 直接使用文件名（去掉扩展名）
-//                return fileName.replace(".config", "").replace("kubeconfig-", "");
-//            }
-//        } catch (Exception e) {
-//            // 如果解析失败，返回路径的hash作为标识
-//            return "cluster-" + Math.abs(kubeconfigPath.hashCode() % 1000);
-//        }
-//    }
-
 }

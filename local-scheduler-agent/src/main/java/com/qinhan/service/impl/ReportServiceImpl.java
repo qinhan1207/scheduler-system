@@ -29,7 +29,7 @@ public class ReportServiceImpl implements ReportService {
      * 每10秒采集并上报所有集群状态
      */
     @Override
-    @Scheduled(fixedRate = 10000)
+    @Scheduled(fixedRate = 30000)
     public void reportAllClusters() {
         log.info("🛰️ 开始采集并上报所有集群状态...");
 

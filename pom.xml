@@ -22,7 +22,6 @@
     </properties>
 
     <modules>
-        <module>bridge</module>
         <module>global-scheduler</module>
         <module>local-scheduler-agent</module>
         <module>scheduler-common</module>

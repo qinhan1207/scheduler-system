@@ -17,6 +17,9 @@ public class MemberClusterServiceImpl implements MemberClusterService {
 
     private final ConcurrentHashMap<String, ClusterStatus> clusterMap = new ConcurrentHashMap<>();
 
+    /**
+     * 更新集群状态
+     */
     @Override
     public void updateClusterStatus(ClusterStatus status) {
         // 计算集群健康状态
@@ -35,6 +38,10 @@ public class MemberClusterServiceImpl implements MemberClusterService {
                 String.format("%.2f", healthScore));
     }
 
+    /**
+     * 查看所有集群
+     * @return 所有集群信息
+     */
     @Override
     public List<ClusterStatus> getAllClusterStatus() {
         return new ArrayList<>(clusterMap.values());

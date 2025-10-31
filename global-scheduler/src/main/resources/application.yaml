@@ -3,3 +3,5 @@ spring:
     name: global-scheduler
 karmada:
   kubeconfig: E:\karmada-config
+server:
+  port: 8088

@@ -7,14 +7,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+
+/**
+ * gs客户端，用于连接gs服务，向gs发送成员集群信息
+ */
 @Slf4j
 @Component
 public class GlobalSchedulerClient {
 
-    @Value("${global.scheduler.url:http://localhost:8080}")
+    @Value("${global.scheduler.url:http://localhost:8088}")
     private String globalSchedulerUrl;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    public GlobalSchedulerClient(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     /**
      * 向 GC 上报集群状态

@@ -4,13 +4,50 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="refactor(bridge): 移除冗余的集群变更检测逻辑&#10;&#10;- 删除精确判断集群配置变化的逻辑&#10;- 移除了用于缓存上次集群信息的 lastClusterCache&#10;- 清理相关辅助方法 isSameClusterList 和 updateClusterCache- 简化事件处理流程，提高代码可读性&#10;- 保留初始同步跳过机制以避免历史数据干扰">
+    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(global-scheduler): 实现tentative调度建议管理功能&#10;&#10;-重构Bridge事件处理逻辑，集成全局决策引擎评估调度建议&#10;- 新增TentativeRecord模型，支持构建者模式和唯一ID标识&#10;- 实现TentativeController，提供调度建议的创建、确认、拒绝接口- 完善TentativeService接口，增加状态查询和工作负载维度检索&#10;-优化TentativeServiceImpl，实现自动评估和手动处理调度建议- 添加调度建议处理定时任务，支持自动确认或拒绝机制&#10;- 移除旧版addTentative方法，统一调度建议创建入口&#10;- 增强日志记录，提供调度建议全生命周期跟踪能力">
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/ClusterScoreController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/ClusterScoreService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/ClusterScoreServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/config/HttpClientConfig.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/ClusterScore.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/TentativeController.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/TentativeController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/TentativeService.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/TentativeService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/BridgeEventServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/BridgeEventServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/TentativeServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/TentativeServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/TentativeRecord.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/TentativeRecord.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/pom.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/BridgeApplication.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/client/GlobalSchedulerClient.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/controller/DebugController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/controller/TestController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/BridgeService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/impl/BridgeServiceImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/java/com/qinhan/service/impl/BridgeServiceImpl2.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/main/resources/application.yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/bridge/src/test/java/com/qinhan/BridgeApplicationTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/BridgeEventController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/SchedulingController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/controller/TentativeController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/decision/GlobalDecisionEngine.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/BindingUpdaterService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/BridgeEventService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/ClusterSelector.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/SchedulingService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/TentativeService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/BindingUpdaterServiceImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/BridgeEventServiceImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/MemberClusterServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/MemberClusterServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/SchedulingServiceImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/TentativeServiceImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/client/GlobalSchedulerClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/client/GlobalSchedulerClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ClusterMonitorServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ClusterMonitorServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ReportServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ReportServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/ScheduleDecision.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/SchedulingEvent.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/SchedulingRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/SchedulingResponse.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/TentativeRecord.java" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,51 +96,58 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;JUnit.K8sConnectionTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.LocalSchedulerAgentApplicationTests.run (1).executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.LocalSchedulerAgentApplicationTests.run.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.LocalSchedulerAgentApplicationTests.testCollectClusterStatus.executor&quot;: &quot;Run&quot;,
-    &quot;Maven. [org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.bridge [clean].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.bridge [compile].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.bridge [install].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.scheduler-system [clean].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.scheduler-system [compile].executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
-    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
-    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
-    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;Spring Boot.BridgeApplication.executor&quot;: &quot;Run&quot;,
-    &quot;Spring Boot.GlobalSchedulerApplication.executor&quot;: &quot;Run&quot;,
-    &quot;Spring Boot.LocalSchedulerAgentApplication.executor&quot;: &quot;Run&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/code/back/scheduler-system/scheduler-pojo/src/main/java/com/qinhan/model&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;run.configurations.included.in.services&quot;: &quot;true&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "JUnit.K8sConnectionTest.executor": "Run",
+    "JUnit.LocalSchedulerAgentApplicationTests.run (1).executor": "Run",
+    "JUnit.LocalSchedulerAgentApplicationTests.run.executor": "Run",
+    "JUnit.LocalSchedulerAgentApplicationTests.testCollectClusterStatus.executor": "Run",
+    "Maven. [org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate].executor": "Run",
+    "Maven.bridge [clean].executor": "Run",
+    "Maven.bridge [compile].executor": "Run",
+    "Maven.bridge [install].executor": "Run",
+    "Maven.scheduler-system [clean].executor": "Run",
+    "Maven.scheduler-system [compile].executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "Spring Boot.BridgeApplication.executor": "Run",
+    "Spring Boot.GlobalSchedulerApplication.executor": "Run",
+    "Spring Boot.LocalSchedulerAgentApplication.executor": "Debug",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/code/back/scheduler-system/scheduler-pojo/src/main/java/com/qinhan/model",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "run.configurations.included.in.services": "true",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CreateClassDialog.RecentsKey">
       <recent name="com.qinhan.service" />
     </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\code\back\scheduler-system\scheduler-pojo\src\main\java\com\qinhan\model" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\code\back\scheduler-system\local-scheduler-agent\src\main\java" />
+      <recent name="D:\code\back\scheduler-system\local-scheduler-agent\src\main\java\com\qinhan\config" />
+    </key>
+    <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
+      <recent name="com.qinhan" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
       <recent name="com.qinhan.model" />
@@ -123,7 +167,6 @@
         <entry key="SpringBootApplicationConfigurationType">
           <value>
             <map>
-              <entry key="BridgeApplication" value="STOPPED" />
               <entry key="GlobalSchedulerApplication" value="STOPPED" />
               <entry key="LocalSchedulerAgentApplication" value="STOPPED" />
             </map>
@@ -196,14 +239,6 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="BridgeApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
-      <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
-      <module name="bridge" />
-      <option name="SPRING_BOOT_MAIN_CLASS" value="com.qinhan.BridgeApplication" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="GlobalSchedulerApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <module name="global-scheduler" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="com.qinhan.GlobalSchedulerApplication" />
@@ -220,10 +255,9 @@
     </configuration>
     <list>
       <item itemvalue="JUnit.K8sConnectionTest" />
-      <item itemvalue="JUnit.LocalSchedulerAgentApplicationTests.run" />
       <item itemvalue="JUnit.LocalSchedulerAgentApplicationTests.run (1)" />
+      <item itemvalue="JUnit.LocalSchedulerAgentApplicationTests.run" />
       <item itemvalue="JUnit.LocalSchedulerAgentApplicationTests.testCollectClusterStatus" />
-      <item itemvalue="Spring Boot.BridgeApplication" />
       <item itemvalue="Spring Boot.GlobalSchedulerApplication" />
       <item itemvalue="Spring Boot.LocalSchedulerAgentApplication" />
     </list>
@@ -283,6 +317,11 @@
       <workItem from="1761289993128" duration="104000" />
       <workItem from="1761290108347" duration="6119000" />
       <workItem from="1761460818874" duration="1870000" />
+      <workItem from="1761737679945" duration="867000" />
+      <workItem from="1761806160338" duration="5765000" />
+      <workItem from="1761812687481" duration="3344000" />
+      <workItem from="1761821940970" duration="8000" />
+      <workItem from="1761886350859" duration="3149000" />
     </task>
     <task id="LOCAL-00001" summary="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构">
       <option name="closed" value="true" />
