@@ -27,6 +27,7 @@ public class MemberClusterServiceImpl implements MemberClusterService {
      */
     @Override
     public void updateClusterStatus(ClusterStatus status) {
+        // 补充未能采集的原生数据（模拟出来）
         status = resourceSimulatorService.enrichDynamicMetrics(status);
         // 计算集群健康状态
         String healthStatus = HealthEvaluator.evaluate(status);
@@ -56,7 +57,7 @@ public class MemberClusterServiceImpl implements MemberClusterService {
     /**
      * 定期对集群进行评分和健康的修改
      */
-    @Scheduled(fixedRateString = "${global.cluster.health-eval-interval:10000}")
+    @Scheduled(fixedRateString = "${global.cluster.health-eval-interval:30000}")
     public void periodicEvaluateAll() {
         log.info("🩺 定期健康评估任务开始...");
 
