@@ -41,21 +41,20 @@ public class ClusterScoreServiceImpl implements ClusterScoreService {
         }
 
 
-        double cpu = status.getCpuUsage();
-        double mem = status.getMemoryUsage();
 
         // 简单的健康评分算法（后续可以接 ML 模型）
         double score = status.getHealthScore();
 
         String reason;
-        if ("Critical".equalsIgnoreCase(status.getHealthStatus())) {
-            reason = "集群处于危险状态，负载过高";
-        } else if ("Warning".equalsIgnoreCase(status.getHealthStatus())) {
-            reason = "集群负载较高，建议谨慎调度";
-        } else if ("Healthy".equalsIgnoreCase(status.getHealthStatus())) {
-            reason = "集群运行稳定，资源充足";
-        } else {
-            reason = "未知状态";
+        switch (status.getHealthStatus().toLowerCase()) {
+            case "critical" ->
+                    reason = "集群网络或存储状态异常，延迟或丢包率过高";
+            case "warning" ->
+                    reason = "网络波动或存储占用较高，建议降低调度压力";
+            case "healthy" ->
+                    reason = "网络畅通，带宽充足，集群运行稳定";
+            default ->
+                    reason = "未知状态";
         }
 
         ClusterScore result = ClusterScore.builder()

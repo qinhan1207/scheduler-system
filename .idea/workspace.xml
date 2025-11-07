@@ -4,11 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(global-scheduler): 引入资源模拟服务以补全动态指标- 新增 ResourceSimulatorService 接口及其实现类- 在 MemberClusterServiceImpl 中集成资源模拟逻辑&#10;- 添加 ValueFluctuator 工具类用于生成连续波动数值&#10;- 移除 HealthEvaluator 中冗余的注释内容">
+    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(local-scheduler-agent): 增强集群状态采集能力并丰富监控指标&#10;&#10;- 扩展 ClusterStatus 模型，新增网络、调度、异常检测等指标字段-优化集群状态采集逻辑，增加节点、Pod、资源使用率统计- 实现网络延迟测量方法，模拟带宽与丢包率计算&#10;- 添加 Pending Pod 统计与调度队列长度估算&#10;- 引入健康评分与基础信息补充机制&#10;- 调整日志输出格式，增强可读性与信息完整性">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/ClusterScoreServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/ClusterScoreServiceImpl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/MemberClusterServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/MemberClusterServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ClusterMonitorServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ClusterMonitorServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/ClusterStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/ClusterStatus.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/HealthEvaluator.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/HealthEvaluator.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -257,7 +257,10 @@
       <workItem from="1762070025438" duration="55000" />
       <workItem from="1762070141483" duration="4234000" />
       <workItem from="1762148813762" duration="9563000" />
-      <workItem from="1762322455504" duration="16545000" />
+      <workItem from="1762322455504" duration="16632000" />
+      <workItem from="1762408668181" duration="6452000" />
+      <workItem from="1762494808343" duration="611000" />
+      <workItem from="1762503199920" duration="758000" />
     </task>
     <task id="LOCAL-00001" summary="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构">
       <option name="closed" value="true" />
@@ -387,7 +390,15 @@
       <option name="project" value="LOCAL" />
       <updated>1761894529711</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="feat(local-scheduler-agent): 增强集群状态采集能力并丰富监控指标&#10;&#10;- 扩展 ClusterStatus 模型，新增网络、调度、异常检测等指标字段-优化集群状态采集逻辑，增加节点、Pod、资源使用率统计- 实现网络延迟测量方法，模拟带宽与丢包率计算&#10;- 添加 Pending Pod 统计与调度队列长度估算&#10;- 引入健康评分与基础信息补充机制&#10;- 调整日志输出格式，增强可读性与信息完整性">
+      <option name="closed" value="true" />
+      <created>1762351363280</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1762351363280</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -433,6 +444,7 @@
     <MESSAGE value="refactor(bridge): 移除冗余的集群变更检测逻辑&#10;&#10;- 删除精确判断集群配置变化的逻辑&#10;- 移除了用于缓存上次集群信息的 lastClusterCache&#10;- 清理相关辅助方法 isSameClusterList 和 updateClusterCache- 简化事件处理流程，提高代码可读性&#10;- 保留初始同步跳过机制以避免历史数据干扰" />
     <MESSAGE value="feat(global-scheduler): 新增集群健康评分接口供Karmada调度插件调用，调整整体项目结构，使其成为go插件+java服务类型&#10;&#10;- 新增 ClusterScoreController 提供 RESTful 接口- 实现 ClusterScoreService 与 ClusterScoreServiceImpl用于计算集群健康分&#10;- 添加 ClusterScore 数据模型表示评分结果&#10;- 支持通过 /api/advisor/score 获取指定集群的健康状态与评分&#10;- 评分依据来自 MemberClusterService 提供的集群监控数据&#10;- 提供 /api/advisor/ping 用于服务健康检查&#10;&#10;fix(local-scheduler-agent): 更新全局调度器URL配置并移除冗余代码&#10;&#10;- 将 global.scheduler.url 配置项端口从80 更新为 8088&#10;- 移除 ClusterMonitorServiceImpl 中已注释的 extractClusterName 方法refactor(global-scheduler): 调整应用配置并删除废弃类&#10;&#10;- 在 application.yaml 中新增 server.port 配置项设置端口为8088&#10;- 删除 BindingUpdaterService 接口及其默认实现类- 删除 BridgeEventController、BridgeEventService 及其相关实现&#10;- 删除 BridgeServiceImpl 和 BridgeService 接口及相关控制器 DebugController- 清理项目中不再使用的配置文件内容&#10;&#10;chore(bridge): 移除整个 bridge 模块的代码与配置&#10;&#10;- 删除 bridge 模块下的 application.yaml 配置文件&#10;- 删除 BridgeApplication 主启动类及测试类 BridgeApplicationTests&#10;- 删除所有 bridge 相关的服务接口与实现类&#10;- 删除 bridge 模块中定义的调试控制器 DebugController" />
     <MESSAGE value="feat(global-scheduler): 引入资源模拟服务以补全动态指标- 新增 ResourceSimulatorService 接口及其实现类- 在 MemberClusterServiceImpl 中集成资源模拟逻辑&#10;- 添加 ValueFluctuator 工具类用于生成连续波动数值&#10;- 移除 HealthEvaluator 中冗余的注释内容" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(global-scheduler): 引入资源模拟服务以补全动态指标- 新增 ResourceSimulatorService 接口及其实现类- 在 MemberClusterServiceImpl 中集成资源模拟逻辑&#10;- 添加 ValueFluctuator 工具类用于生成连续波动数值&#10;- 移除 HealthEvaluator 中冗余的注释内容" />
+    <MESSAGE value="feat(local-scheduler-agent): 增强集群状态采集能力并丰富监控指标&#10;&#10;- 扩展 ClusterStatus 模型，新增网络、调度、异常检测等指标字段-优化集群状态采集逻辑，增加节点、Pod、资源使用率统计- 实现网络延迟测量方法，模拟带宽与丢包率计算&#10;- 添加 Pending Pod 统计与调度队列长度估算&#10;- 引入健康评分与基础信息补充机制&#10;- 调整日志输出格式，增强可读性与信息完整性" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(local-scheduler-agent): 增强集群状态采集能力并丰富监控指标&#10;&#10;- 扩展 ClusterStatus 模型，新增网络、调度、异常检测等指标字段-优化集群状态采集逻辑，增加节点、Pod、资源使用率统计- 实现网络延迟测量方法，模拟带宽与丢包率计算&#10;- 添加 Pending Pod 统计与调度队列长度估算&#10;- 引入健康评分与基础信息补充机制&#10;- 调整日志输出格式，增强可读性与信息完整性" />
   </component>
 </project>

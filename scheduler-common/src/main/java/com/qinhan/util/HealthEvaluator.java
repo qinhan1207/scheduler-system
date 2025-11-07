@@ -4,68 +4,107 @@ import com.qinhan.model.ClusterStatus;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 集群健康评估工具类
+ * 集群健康评估工具类（新版）
  * --------------------------------------------------
- * 用于根据 CPU / 内存等指标评估集群整体健康状态。
- * 当前版本使用简单的阈值逻辑，可在未来扩展为：
- * - 加权评分模型（CPU/内存/节点状态/Pod失败率等）
- * - 动态阈值（基于历史均值）
- * - 支持配置文件加载阈值
+ * 基于 Karmada 无法直接采集的扩展指标进行健康评估：
+ * - 网络延迟 (networkLatency)
+ * - 网络带宽 (networkBandwidth)
+ * - 丢包率 (packetLossRate)
+ * - 存储使用率 (storageUsage)
+ * <p>
+ * 打分原则：
+ * - 延迟越小越好
+ * - 带宽越高越好
+ * - 丢包率越低越好
+ * - 存储使用率越低越好
+ * <p>
+ * 输出：
+ * - 健康等级（Healthy / Warning / Critical）
+ * - 综合健康分数（0 ~ 100）
  */
 @Slf4j
 public class HealthEvaluator {
 
-    // 阈值（可根据实验情况调整）
-    private static final double CPU_WARNING = 75.0;
-    private static final double CPU_CRITICAL = 90.0;
+    // ===================== 权重配置 =====================
+    private static final double W_LATENCY = 0.35;     // 网络延迟权重
+    private static final double W_BANDWIDTH = 0.25;   // 网络带宽权重
+    private static final double W_LOSS = 0.25;        // 丢包率权重
+    private static final double W_STORAGE = 0.15;     // 存储使用率权重
 
-    private static final double MEM_WARNING = 75.0;
-    private static final double MEM_CRITICAL = 90.0;
+
+    // ===================== 主要计算方法 =====================
 
     /**
-     * 根据 CPU 与内存使用率计算健康等级
-     * @param status 集群状态对象
-     * @return 返回 "Healthy" / "Warning" / "Critical"
+     * 综合健康评估：返回 "Healthy" / "Warning" / "Critical"
      */
     public static String evaluate(ClusterStatus status) {
-        if (status == null) {
-            log.warn("⚠️ HealthEvaluator: 收到空的 ClusterStatus，跳过计算。");
-            return "Unknown";
-        }
+        double score = calculateScore(status);
 
-        double cpu = status.getCpuUsage();
-        double mem = status.getMemoryUsage();
-
-        // 健康度计算逻辑
-        String health;
-        if (cpu < CPU_WARNING && mem < MEM_WARNING) {
-            health = "Healthy";
-        } else if (cpu < CPU_CRITICAL && mem < MEM_CRITICAL) {
-            health = "Warning";
+        String level;
+        if (score >= 80) {
+            level = "Healthy";
+        } else if (score >= 60) {
+            level = "Warning";
         } else {
-            health = "Critical";
+            level = "Critical";
         }
 
-        // 打印详细日志
-        log.debug("🩺 健康评估 => 集群={} | CPU={}% | MEM={}% | 状态={}",
+        log.debug("🩺 健康评估 => 集群={} | 总分={} | 状态={}",
                 status.getClusterName(),
-                String.format("%.2f", cpu),
-                String.format("%.2f", mem),
-                health);
+                String.format("%.2f", score),
+                level);
 
-        return health;
+        return level;
     }
 
     /**
-     * 可选：返回一个数值评分（0~100）
-     * 用于量化健康度，方便后续排序或聚合分析。
+     * 计算健康分数（0~100）
      */
     public static double calculateScore(ClusterStatus status) {
-        double cpu = status.getCpuUsage();
-        double mem = status.getMemoryUsage();
+        if (status == null) {
+            log.warn("⚠️ HealthEvaluator: 收到空的 ClusterStatus，跳过计算。");
+            return 0;
+        }
 
-        // 简单加权平均：CPU、内存各占一半
-        double score = 100 - ((cpu + mem) / 2);
-        return Math.max(0, Math.min(score, 100)); // 限制在 [0,100]
+        // ---------- 1️⃣ 原始指标 ----------
+        double latency = status.getNetworkLatency();      // ms，越小越好
+        double bandwidth = status.getNetworkBandwidth();  // Mbps，越大越好
+        double loss = status.getPacketLossRate();         // 百分比，越小越好
+        double storage = status.getStorageUsage();        // 百分比，越小越好
+
+        // ---------- 2️⃣ 各指标得分（归一化到 0~100） ----------
+
+        // 延迟得分（线性衰减），>100ms 直接视为 0
+        double latencyScore = Math.max(0, 100 - latency);
+
+        // 带宽得分（线性比例，200Mbps 为满分）
+        double bandwidthScore = Math.min(100, bandwidth / 2.0);
+
+        // 丢包率得分（放大惩罚）
+        double lossScore = Math.max(0, 100 - loss * 2000);
+
+        // 存储使用率得分（越低越好）
+        double storageScore = Math.max(0, 100 - storage);
+
+        // ---------- 3️⃣ 综合加权 ----------
+        double totalScore =
+                W_LATENCY * latencyScore +
+                        W_BANDWIDTH * bandwidthScore +
+                        W_LOSS * lossScore +
+                        W_STORAGE * storageScore;
+
+        totalScore = Math.max(0, Math.min(100, totalScore)); // 限制范围
+
+        log.debug(
+                "💡 健康打分明细: 延迟={}ms => {} | 带宽={}Mbps => {} | 丢包率={} => {} | 存储={} => {} | 综合={}",
+                String.format("%.2f", latency), String.format("%.2f", latencyScore),
+                String.format("%.1f", bandwidth), String.format("%.2f", bandwidthScore),
+                String.format("%.4f", loss), String.format("%.2f", lossScore),
+                String.format("%.1f", storage), String.format("%.2f", storageScore),
+                String.format("%.2f", totalScore)
+        );
+
+
+        return totalScore;
     }
 }
