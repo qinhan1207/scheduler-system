@@ -81,12 +81,16 @@ public class ClusterMonitorServiceImpl implements ClusterMonitorService {
             // 让内存与CPU正相关
             double memoryUsage = Math.min(95, cpuUsage + Math.random() * 8 - 4);
             // 让存储随pod数量增长，但增速缓慢
-            double storageUsage = Math.min(90, 10 + podCount * 0.02 + Math.random() * 5);
+//            double storageUsage = Math.min(90, 10 + podCount * 0.02 + Math.random() * 5);  // 模拟差异化数据，看实验效果
+            double storageUsage = 10 + podCount * 0.05 + Math.random() * 10;
 
             // ====================== 网络指标（模拟） ======================
             double networkLatency = measureNetworkLatency(client.getBasePath());                // 实际为 API 调用延迟
-            double networkBandwidth = 200 / (1 + networkLatency / 2); // 模拟带宽 50~100 Mbps
-            double packetLossRate = networkLatency / 500;       // 模拟丢包率 0~0.1%
+//            double networkBandwidth = 200 / (1 + networkLatency / 2); // 模拟带宽 50~100 Mbps
+//            double packetLossRate = networkLatency / 500;       // 模拟丢包率 0~0.1%
+
+            double networkBandwidth = 100 + Math.random() * 100; // 100~200 Mbps
+            double packetLossRate = Math.random() * 0.002 + networkLatency / 1000;
 
 
             // ====================== 构建 ClusterStatus ======================
