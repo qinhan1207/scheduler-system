@@ -19,6 +19,9 @@ import java.time.Instant;
 public class ClusterStatus {
 
     // ================== 基础信息 ==================
+    /** 数据库主键 */
+    private Long id;
+
     /** 集群名称（唯一标识） */
     private String clusterName;
 
@@ -83,6 +86,9 @@ public class ClusterStatus {
 
     /** 稳定性预测得分（0-1，越高说明更稳定）（原生karmada采集不到） */
     private double stabilityScore;
+
+    /** 数据记录创建时间（方便时间序分析） */
+    private Instant createdAt;
 
 
     // ================== 工具方法 ==================
