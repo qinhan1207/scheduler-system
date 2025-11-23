@@ -1,0 +1,107 @@
+# ================= 1. 身份与权限 (RBAC) =================
+# 创建一个 ServiceAccount，Agent 容器将使用这个身份
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: lsa-agent-sa
+  namespace: default
+---
+# 创建一个 ClusterRole，授予读取集群信息的权限
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: lsa-reader
+rules:
+  # 允许读取节点、Pod、Service 等基础信息
+  - apiGroups: [""]
+    resources: ["nodes", "pods", "services", "endpoints"]
+    verbs: ["get", "list", "watch"]
+  # 如果集群安装了 Metrics Server，允许读取资源指标
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["nodes", "pods"]
+    verbs: ["get", "list"]
+---
+# 将权限绑定给 ServiceAccount
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: lsa-reader-binding
+subjects:
+  - kind: ServiceAccount
+    name: lsa-agent-sa
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: lsa-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+# ================= 2. 应用部署 (Deployment) =================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lsa-agent
+  namespace: default
+  labels:
+    app: lsa-agent
+spec:
+  replicas: 1 # 分布式模式下，每个集群只需要 1 个 Agent
+  selector:
+    matchLabels:
+      app: lsa-agent
+  template:
+    metadata:
+      labels:
+        app: lsa-agent
+    spec:
+      # ⚠️ 必须指定使用上面创建的有权限的账号
+      serviceAccountName: lsa-agent-sa
+      containers:
+        - name: agent
+          image: my-lsa:v1 # 您在 Linux 上 build 的镜像名
+          imagePullPolicy: Never # ⚠️ 关键：Kind 环境使用本地加载的镜像，禁止去 DockerHub 拉取
+          ports:
+            - containerPort: 8081
+          env:
+            # ---------------------------------------------------
+            # 环境变量配置 (覆盖 application.yaml 中的默认值)
+            # ---------------------------------------------------
+
+            # 1. 开启分布式模式 (必填)
+            - name: LSA_MODE
+              value: "distributed"
+
+            # 2. 当前集群名称 (必填)
+            # ⚠️ 部署到不同集群时，必须修改此值！例如: member1, member2, member3
+            - name: LSA_CURRENT_CLUSTER_NAME
+              value: "member1"
+
+            # 3. 全局调度器地址 (必填)
+            # 指向 Windows 宿主机的 IP (请确保 10.11.17.1 能被 Kind 容器访问)
+            - name: GLOBAL_SCHEDULER_URL
+              value: "http://10.11.17.1:8088"
+
+          # 资源限制 (建议加上，防止 Java 吃光资源)
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+---
+# ================= 3. 服务暴露 (Service) =================
+apiVersion: v1
+kind: Service
+metadata:
+  name: lsa-service
+  namespace: default
+spec:
+  type: NodePort # 暴露到宿主机端口，方便其他 Agent 探测
+  selector:
+    app: lsa-agent
+  ports:
+    - port: 8081
+      targetPort: 8081
+      # ⚠️ 部署到不同集群时，建议修改此端口以示区分
+      # member1: 30001, member2: 30002, member3: 30003
+      nodePort: 30001

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.Map;
 
 /**
  * LSA 模块上报的集群状态信息
@@ -67,6 +68,14 @@ public class ClusterStatus {
 
     /** 丢包率（百分比 0-100） */
     private double packetLossRate;
+
+    // 🔥 新增字段：拓扑延迟表
+    // Key: 目标集群名称 (e.g., "kind-2"), Value: RTT (ms)
+    private Map<String, Double> peerLatencyMap;
+
+    // 🔥 新增字段：拓扑丢包率表
+    // Key: 目标集群名称, Value: 丢包率 (%)
+    private Map<String, Double> peerPacketLossMap;
 
 
     // ================== 调度与负载指标 ==================

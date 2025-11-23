@@ -4,8 +4,17 @@ spring:
 server:
   port: 8081
 
-# 多集群LSA配置
+# LSA 核心配置
 lsa:
+  # 运行模式: standalone (本地开发) / distributed (集群内运行)
+  # 在 k8s deployment 中，可以通过环境变量 LSA_MODE=distributed 覆盖
+  mode: ${LSA_MODE:standalone}
+
+  # 当前集群名称 (分布式模式必填)
+  # 在 k8s deployment 中，通过环境变量 LSA_CURRENT_CLUSTER_NAME=kind-1 注入
+  current-cluster-name: ${LSA_CURRENT_CLUSTER_NAME:unknown}
+
+  # 集中式模式配置 (本地开发用)
   clusters:
     configs:
       - name: member1
@@ -14,10 +23,10 @@ lsa:
         kubeconfigPath: E:\kubeconfig\member2.kubeconfig
       - name: member3
         kubeconfigPath: E:\kubeconfig\member3.kubeconfig
-      # 如果是 kwok 模拟环境，也可以使用共享配置
-      # - name: karmada-kwok-01
-      #   kubeconfigPath: /etc/karmada/kwok/kubeconfig.yaml
 
+# 全局调度器地址 (Java Brain)
 global:
   scheduler:
-    url: http://localhost:8088
+    # 在 k8s 中，这里的 localhost 需要改为宿主机 IP (如 10.11.17.1)
+    # 可以通过环境变量 GLOBAL_SCHEDULER_URL 覆盖
+    url: ${GLOBAL_SCHEDULER_URL:http://localhost:8088}

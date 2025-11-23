@@ -10,11 +10,13 @@ import io.kubernetes.client.openapi.models.V1PodList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -22,23 +24,28 @@ public class ClusterMonitorServiceImpl implements ClusterMonitorService {
 
     private final K8sClientUtil k8sClientUtil;
 
+    // 模拟邻居列表（后续应该从 Global Scheduler 动态拉取）
+    // Key: 集群名, Value: 目标IP:端口 (NodePort)
+    // 在 Kind 环境中，不同集群可以通过 Linux 宿主机 IP + NodePort 互通
+    private final Map<String, String> peerTargets = new ConcurrentHashMap<>();
+
     public ClusterMonitorServiceImpl(K8sClientUtil k8sClientUtil) {
         this.k8sClientUtil = k8sClientUtil;
+        // 暂时硬编码邻居地址用于测试 (假设 Linux 宿主机 IP 是 10.11.17.222)
+        // 如果我是 member1 (30001)，我要测 member2 和 member3
+        // 注意：实际部署时，这些信息应该动态获取或配置
+        peerTargets.put("member1", "10.11.17.222:30001");
+        peerTargets.put("member2", "10.11.17.222:30002");
+        peerTargets.put("member3", "10.11.17.222:30003");
     }
 
-    /**
-     * 测试集群是否能连通
-     */
     @Override
     public void testClusterConnection(String kubeconfigPath) {
         try {
             ApiClient client = k8sClientUtil.getClient(kubeconfigPath);
             CoreV1Api api = new CoreV1Api(client);
-
-            // ✅ 新版 API：先创建 Request，再 execute()
             V1NodeList nodes = api.listNode().execute();
             V1PodList pods = api.listPodForAllNamespaces().execute();
-
             log.info("✅ 成功连接集群 [{}]: 节点数={}, Pod数={}",
                     kubeconfigPath, nodes.getItems().size(), pods.getItems().size());
         } catch (Exception e) {
@@ -46,125 +53,128 @@ public class ClusterMonitorServiceImpl implements ClusterMonitorService {
         }
     }
 
-    /**
-     * 收集集群原始数据
-     *
-     * @param kubeconfigPath 成员集群kubeconfig文件路径
-     * @return 集群状态
-     */
     @Override
     public ClusterStatus collectClusterStatus(String kubeconfigPath) {
         try {
+            // 1. 获取 Client (支持 In-Cluster 模式)
             ApiClient client = k8sClientUtil.getClient(kubeconfigPath);
             CoreV1Api api = new CoreV1Api(client);
 
-            long startTime = System.currentTimeMillis();
-
-            // ====================== 基础采集 ======================
+            // 2. 采集基础资源 (CPU/Mem)
             V1NodeList nodes = api.listNode().execute();
             V1PodList pods = api.listPodForAllNamespaces().execute();
 
             int nodeCount = nodes.getItems().size();
             int podCount = pods.getItems().size();
 
-
-            // ====================== Pod 调度状态统计 ======================
+            // ... 简单的模拟资源计算逻辑 ...
+            // 这里为了演示，保留原有模拟逻辑，实际可改为从 Metrics Server 获取
             int pendingPods = (int) pods.getItems().stream()
                     .filter(p -> p.getStatus() != null && "Pending".equalsIgnoreCase(p.getStatus().getPhase()))
                     .count();
             double podPendingRatio = podCount > 0 ? (pendingPods * 100.0 / podCount) : 0.0;
 
-            // ====================== 资源利用率（优化模拟） ======================
-            // 让CPU使用率随pod数与pending比例上升
-            double cpuBase = 25 + (podCount * 0.05) + (podPendingRatio * 0.1);
-            double cpuUsage = Math.min(95, cpuBase + Math.random() * 10 - 5); // 轻微波动 ±5%
-            // 让内存与CPU正相关
-            double memoryUsage = Math.min(95, cpuUsage + Math.random() * 8 - 4);
-            // 让存储随pod数量增长，但增速缓慢
-//            double storageUsage = Math.min(90, 10 + podCount * 0.02 + Math.random() * 5);  // 模拟差异化数据，看实验效果
-            double storageUsage = 10 + podCount * 0.05 + Math.random() * 10;
+            double cpuUsage = Math.min(95, 25 + (podCount * 0.05) + (podPendingRatio * 0.1));
+            double memoryUsage = Math.min(95, 30 + (podCount * 0.05));
+            double storageUsage = 10 + (podCount * 0.05);
 
-            // ====================== 网络指标（模拟） ======================
-            double networkLatency = measureNetworkLatency(client.getBasePath());                // 实际为 API 调用延迟
-//            double networkBandwidth = 200 / (1 + networkLatency / 2); // 模拟带宽 50~100 Mbps
-//            double packetLossRate = networkLatency / 500;       // 模拟丢包率 0~0.1%
+            // 3. 采集网络指标 (Ping 邻居) - 这是核心新增逻辑 🔥
+            Map<String, Double> latencyMap = probeNeighbors();
+            Map<String, Double> lossMap = new HashMap<>(); // 暂时留空，后续可实现丢包率探测
 
-            double networkBandwidth = 100 + Math.random() * 100; // 100~200 Mbps
-            double packetLossRate = Math.random() * 0.002 + networkLatency / 1000;
+            // 计算平均延迟作为 networkLatency (兼容旧字段)
+            double avgLatency = latencyMap.values().stream()
+                    .mapToDouble(Double::doubleValue)
+                    .average()
+                    .orElse(0.0);
 
+            // 模拟带宽和丢包率 (如果无法真实测量)
+            double networkBandwidth = 100 + Math.random() * 100;
+            double packetLossRate = Math.random() * 0.002 + avgLatency / 1000;
 
-            // ====================== 构建 ClusterStatus ======================
-            ClusterStatus status = ClusterStatus.builder()
+            // 4. 构建 Status
+            return ClusterStatus.builder()
                     .apiServerAddress(client.getBasePath())
                     .nodeCount(nodeCount)
                     .podCount(podCount)
                     .cpuUsage(cpuUsage)
                     .memoryUsage(memoryUsage)
                     .storageUsage(storageUsage)
-                    .networkLatency(networkLatency)
+                    .networkLatency(avgLatency) // 存平均值
                     .networkBandwidth(networkBandwidth)
                     .packetLossRate(packetLossRate)
+                    .peerLatencyMap(latencyMap) // 存详细矩阵 🔥
+                    .peerPacketLossMap(lossMap)
                     .pendingPods(pendingPods)
                     .podPendingRatio(podPendingRatio)
-                    .schedulingQueueLength(pendingPods) // 简单使用 Pending 数代表调度压力
+                    .schedulingQueueLength(pendingPods)
                     .timestamp(Instant.now().toEpochMilli())
                     .build();
 
-            log.info("""
-                            📊 集群 [{}] 状态汇总：
-                            节点数={}，Pod数={}，
-                            CPU={}% MEM={}% Storage={}%，
-                            Pending={}({}%)，
-                            延迟={}ms，带宽={}Mbps，丢包率={}%
-                            """,
-                    kubeconfigPath, nodeCount, podCount,
-                    String.format("%.1f", cpuUsage), String.format("%.1f", memoryUsage), String.format("%.1f", storageUsage),
-                    pendingPods, String.format("%.1f", podPendingRatio),
-                    String.format("%.1f", networkLatency), String.format("%.1f", networkBandwidth), String.format("%.3f", packetLossRate)
-            );
-
-            return status;
-
         } catch (Exception e) {
-            log.error("❌ 收集集群 [{}] 状态失败: {}", kubeconfigPath, e.getMessage());
+            log.error("❌ 收集集群状态失败: {}", e.getMessage());
             return null;
         }
     }
 
+    /**
+     * 探测所有邻居的延迟
+     */
+    public Map<String, Double> probeNeighbors() {
+        Map<String, Double> result = new HashMap<>();
+
+        peerTargets.forEach((name, address) -> {
+            try {
+                String[] parts = address.split(":");
+                String host = parts[0];
+                int port = Integer.parseInt(parts[1]);
+
+                // 探测 RTT
+                double rtt = measureTcpLatency(host, port);
+                result.put(name, rtt);
+            } catch (Exception e) {
+                log.warn("解析目标地址失败: {}", address);
+            }
+        });
+
+        return result;
+    }
 
     /**
-     * 测量到目标 API Server 的 TCP 连接平均延迟（毫秒，支持亚毫秒精度）
+     * 测量 TCP 连接延迟
+     * 支持指定 Host 和 Port (不再局限于 API Server)
      */
-    private double measureNetworkLatency(String apiServerUrl) {
+    private double measureTcpLatency(String host, int port) {
         try {
-            URI uri = new URI(apiServerUrl);
-            String host = uri.getHost();
-            int port = (uri.getPort() == -1) ? 6443 : uri.getPort(); // 默认 K8s API 端口
-            String localHost = InetAddress.getLocalHost().getHostAddress();
-
             double totalLatency = 0.0;
-            int attempts = 5; // 多测几次更稳定
+            int attempts = 3; // 测 3 次取平均
 
             for (int i = 0; i < attempts; i++) {
                 long start = System.nanoTime();
                 try (Socket socket = new Socket()) {
-                    socket.connect(new InetSocketAddress(host, port), 2000); // 2秒超时
+                    // 2秒超时
+                    socket.connect(new InetSocketAddress(host, port), 2000);
                 }
-                double elapsedMs = (System.nanoTime() - start) / 1_000_000.0; // 转毫秒（double 保留小数）
+                double elapsedMs = (System.nanoTime() - start) / 1_000_000.0;
                 totalLatency += elapsedMs;
-                Thread.sleep(100); // 避免过频探测
+                // 稍微歇一下，避免过于频繁
+                if (i < attempts - 1) Thread.sleep(50);
             }
-
-            double avgLatency = totalLatency / attempts;
-            log.info("🌐 网络延迟测量：{} -> {}:{} 平均延迟 = {} ms",
-                    localHost, host, port, String.format("%.3f", avgLatency));
-            return avgLatency;
+            return totalLatency / attempts;
 
         } catch (Exception e) {
-            log.warn("⚠️ 无法测量网络延迟 [{}]: {}", apiServerUrl, e.getMessage());
-            return 999.0; // 高延迟表示网络不可达
+            log.debug("⚠️ 无法连接目标 {}:{} - {}", host, port, e.getMessage());
+            return 999.0; // 超时/不可达
         }
     }
 
-
+    // 保留旧方法以兼容
+    private double measureNetworkLatency(String apiServerUrl) {
+        try {
+            URI uri = new URI(apiServerUrl);
+            return measureTcpLatency(uri.getHost(), uri.getPort() == -1 ? 6443 : uri.getPort());
+        } catch (Exception e) {
+            return 999.0;
+        }
+    }
 }

@@ -2,7 +2,7 @@ package com.qinhan.properties;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -11,11 +11,31 @@ import java.util.List;
  * 从 application.yml 读取 LSA 多集群配置信息
  */
 @Data
-@Configuration
-@ConfigurationProperties(prefix = "lsa.clusters")
+@ConfigurationProperties(prefix = "lsa")
 public class LsaClusterConfigProperties {
 
-    private List<ClusterConfig> configs;
+    /**
+     * 运行模式:
+     * - standalone: (默认) 集中式模式，读取 configs 列表连接多个集群
+     * - distributed: 分布式模式，运行在 Pod 内部，只采集当前集群
+     */
+    private String mode = "standalone";
+
+    /**
+     * 当前集群名称 (仅在 distributed 模式下生效)
+     * 通常通过环境变量注入
+     */
+    private String currentClusterName;
+
+    /**
+     * 集中式模式下的集群配置列表
+     */
+    private Clusters clusters;
+
+    @Data
+    public static class Clusters {
+        private List<ClusterConfig> configs;
+    }
 
     @Data
     public static class ClusterConfig {
@@ -23,4 +43,3 @@ public class LsaClusterConfigProperties {
         private String kubeconfigPath;  // kubeconfig 路径
     }
 }
-
