@@ -72,43 +72,50 @@ public class ClusterMonitorServiceImpl implements ClusterMonitorService {
             int pendingPods = (int) pods.getItems().stream()
                     .filter(p -> p.getStatus() != null && "Pending".equalsIgnoreCase(p.getStatus().getPhase()))
                     .count();
-            double podPendingRatio = podCount > 0 ? (pendingPods * 100.0 / podCount) : 0.0;
 
-            double cpuUsage = Math.min(95, 25 + (podCount * 0.05) + (podPendingRatio * 0.1));
-            double memoryUsage = Math.min(95, 30 + (podCount * 0.05));
-            double storageUsage = 10 + (podCount * 0.05);
+            double cpuUsage = Math.min(99.0, podCount * 2.5);
+            double memoryUsage = Math.min(99.0, podCount * 3.0);
+
 
             // 3. 采集网络指标 (Ping 邻居) - 这是核心新增逻辑 🔥
             Map<String, Double> latencyMap = probeNeighbors();
-            Map<String, Double> lossMap = new HashMap<>(); // 暂时留空，后续可实现丢包率探测
 
-            // 计算平均延迟作为 networkLatency (兼容旧字段)
-            double avgLatency = latencyMap.values().stream()
-                    .mapToDouble(Double::doubleValue)
-                    .average()
-                    .orElse(0.0);
+            // 计算聚合网络指标
+            double avgLatency = 0.0;
+            double packetLossRate = 0.0;
 
-            // 模拟带宽和丢包率 (如果无法真实测量)
-            double networkBandwidth = 100 + Math.random() * 100;
-            double packetLossRate = Math.random() * 0.002 + avgLatency / 1000;
+            if (!latencyMap.isEmpty()) {
+                // (1) 平均延迟：只统计连接成功的节点 (值 < 999)
+                avgLatency = latencyMap.values().stream()
+                        .mapToDouble(Double::doubleValue)
+                        .filter(v -> v < 999.0)
+                        .average()
+                        .orElse(0.0);
+
+                // (2) 丢包率：统计连接超时/失败的节点 (值 >= 999)
+                long timeoutCount = latencyMap.values().stream()
+                        .filter(v -> v >= 999.0)
+                        .count();
+
+                // 丢包率 = 失败次数 / 总探测次数
+                packetLossRate = ((double) timeoutCount / latencyMap.size()) * 100.0;
+            }
+
 
             // 4. 构建 Status
             return ClusterStatus.builder()
+                    .timestamp(Instant.now().toEpochMilli())
                     .apiServerAddress(client.getBasePath())
+                    // 资源指标
                     .nodeCount(nodeCount)
                     .podCount(podCount)
+                    .pendingPods(pendingPods)
                     .cpuUsage(cpuUsage)
                     .memoryUsage(memoryUsage)
-                    .storageUsage(storageUsage)
-                    .networkLatency(avgLatency) // 存平均值
-                    .networkBandwidth(networkBandwidth)
+                    // 网络指标
+                    .networkLatency(avgLatency)
                     .packetLossRate(packetLossRate)
-                    .peerLatencyMap(latencyMap) // 存详细矩阵 🔥
-                    .peerPacketLossMap(lossMap)
-                    .pendingPods(pendingPods)
-                    .podPendingRatio(podPendingRatio)
-                    .schedulingQueueLength(pendingPods)
-                    .timestamp(Instant.now().toEpochMilli())
+                    .peerLatencyMap(latencyMap)
                     .build();
 
         } catch (Exception e) {
@@ -133,7 +140,7 @@ public class ClusterMonitorServiceImpl implements ClusterMonitorService {
                 double rtt = measureTcpLatency(host, port);
                 result.put(name, rtt);
             } catch (Exception e) {
-                log.warn("解析目标地址失败: {}", address);
+                log.warn("解析邻居地址失败: {}", address);
             }
         });
 
@@ -147,34 +154,33 @@ public class ClusterMonitorServiceImpl implements ClusterMonitorService {
     private double measureTcpLatency(String host, int port) {
         try {
             double totalLatency = 0.0;
-            int attempts = 3; // 测 3 次取平均
+            int attempts = 3; // 探测 3 次
+            int successCount = 0;
 
             for (int i = 0; i < attempts; i++) {
                 long start = System.nanoTime();
                 try (Socket socket = new Socket()) {
-                    // 2秒超时
+                    // 设置 2秒 超时
                     socket.connect(new InetSocketAddress(host, port), 2000);
+
+                    double elapsedMs = (System.nanoTime() - start) / 1_000_000.0;
+                    totalLatency += elapsedMs;
+                    successCount++;
+                } catch (Exception ignored) {
+                    // 连接失败，不计入 totalLatency，但在 successCount 中体现
                 }
-                double elapsedMs = (System.nanoTime() - start) / 1_000_000.0;
-                totalLatency += elapsedMs;
-                // 稍微歇一下，避免过于频繁
+
+                // 稍微间隔一下，避免被防火墙认定为攻击
                 if (i < attempts - 1) Thread.sleep(50);
             }
-            return totalLatency / attempts;
 
-        } catch (Exception e) {
-            log.debug("⚠️ 无法连接目标 {}:{} - {}", host, port, e.getMessage());
-            return 999.0; // 超时/不可达
-        }
-    }
+            // 如果至少成功一次，返回平均延迟；否则返回 999.0
+            return successCount > 0 ? (totalLatency / successCount) : 999.0;
 
-    // 保留旧方法以兼容
-    private double measureNetworkLatency(String apiServerUrl) {
-        try {
-            URI uri = new URI(apiServerUrl);
-            return measureTcpLatency(uri.getHost(), uri.getPort() == -1 ? 6443 : uri.getPort());
         } catch (Exception e) {
             return 999.0;
         }
     }
+
+
 }

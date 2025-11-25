@@ -19,8 +19,8 @@ import java.util.Map;
 @AllArgsConstructor
 public class ClusterStatus {
 
-    // ================== 基础信息 ==================
-    /** 数据库主键 */
+    // ================== 身份信息 ==================
+    /** 数据库主键 (入库后生成) */
     private Long id;
 
     /** 集群名称（唯一标识） */
@@ -29,76 +29,60 @@ public class ClusterStatus {
     /** 集群 API Server 地址 */
     private String apiServerAddress;
 
+    /** Agent 采集时的各时间戳 */
+    private long timestamp;
+
+    // ================== 核心资源指标 ==================
     /** 节点数量 */
     private int nodeCount;
 
-    /** Pod 数量 */
+    /** Pod 数量 (用于反映负载密度) */
     private int podCount;
 
-    /** 最近上报时间戳 */
-    private long timestamp;
-
-    /** 集群健康状态（Healthy / Warning / Critical） */
-    private String healthStatus;
-
-    /** 可选字段：备注信息，例如异常原因 */
-    private String remark;
-
-    /** 健康分：0-100 越高越好 */
-    private double healthScore;
-
-
-    // ================== 资源利用率 ==================
     /** CPU 使用率（百分比 0-100） */
     private double cpuUsage;
 
     /** 内存使用率（百分比 0-100） */
     private double memoryUsage;
 
-    /** 存储使用率（百分比 0-100）（原生karmada采集不到） */
-    private double storageUsage;
-
-
-    // ================== 网络指标（原生karmada采集不到） ==================
-    /** 平均网络延迟（毫秒） */
+    // ================== 核心网络指标 (本课题创新点) ==================
+    /** 平均网络延迟 (ms) - 用于快速筛选 */
     private double networkLatency;
 
-    /** 可用带宽（Mbps） */
-    private double networkBandwidth;
-
-    /** 丢包率（百分比 0-100） */
+    /** 丢包率 (%) - 反映网络稳定性 */
     private double packetLossRate;
 
-    // 🔥 新增字段：拓扑延迟表
-    // Key: 目标集群名称 (e.g., "kind-2"), Value: RTT (ms)
+    /** * 🔥 全域感知矩阵：我到其他集群的 RTT 延迟
+     * Key: 目标集群名称 (e.g., "member-2"), Value: RTT (ms)
+     * 调度器将利用此 Map 计算亲和性距离
+     */
     private Map<String, Double> peerLatencyMap;
 
-    // 🔥 新增字段：拓扑丢包率表
-    // Key: 目标集群名称, Value: 丢包率 (%)
-    private Map<String, Double> peerPacketLossMap;
-
-
     // ================== 调度与负载指标 ==================
-    /** Pending Pod 数量 */
+    /** * Pending Pod 数量
+     * 能够最直观地反映集群是否资源耗尽或调度受阻
+     */
     private int pendingPods;
 
-    /** Pending Pod 占比（百分比 0-100） */
-    private double podPendingRatio;
 
-    /** 调度队列长度（用于反映当前负载） */
-    private double schedulingQueueLength;
-
-
-    // ================== 异常检测与预测指标 ==================
-    /** 异常检测得分（0-1，越高说明越异常）（原生karmada采集不到） */
+    // ================== 异常检测与预测结果 (由 GS 计算回填) ==================
+    /** 异常检测得分（0-100） */
     private double anomalyScore;
 
-    /** 稳定性预测得分（0-1，越高说明更稳定）（原生karmada采集不到） */
+    /** 稳定性预测得分（EWMA 预测结果） */
     private double stabilityScore;
 
-    /** 数据记录创建时间（方便时间序分析） */
-    private Instant createdAt;
+    /** 集群健康状态（Healthy / Warning / Critical） */
+    private String healthStatus;
 
+    /** 健康分：0-100 越高越好 */
+    private double healthScore;
+
+    /** 备注信息 */
+    private String remark;
+
+    /** 数据入库时间 (服务端生成) */
+    private Instant createdAt;
 
     // ================== 工具方法 ==================
     public static ClusterStatus simple(String clusterName, int nodeCount, int podCount, double cpu, double mem) {

@@ -1,11 +1,12 @@
 package com.qinhan.service.impl;
 
 import com.qinhan.model.ClusterStatus;
+import com.qinhan.service.AnomalyDetectionService;
 import com.qinhan.service.MemberClusterService;
+import com.qinhan.service.ResourceSimulatorService;
 import com.qinhan.util.HealthEvaluator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -17,66 +18,45 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class MemberClusterServiceImpl implements MemberClusterService {
 
-
     private final ConcurrentHashMap<String, ClusterStatus> clusterMap = new ConcurrentHashMap<>();
 
-    /**
-     * 更新集群状态
-     */
+    // 注入异常检测服务 (包含 EWMA 预测)
+    private final AnomalyDetectionService anomalyDetectionService;
+
+    // 注入资源模拟器 (如果还需要补全 CPU/Mem 的话，如果 LSA 已经采集了真实值，这个可以考虑移除了)
+    private final ResourceSimulatorService resourceSimulatorService;
+
     @Override
     public void updateClusterStatus(ClusterStatus status) {
+        // 1. 数据补全 (如果 LSA 发来的数据某些字段为空，这里做最后兜底)
+        // 如果 LSA 现在已经能发真实的 CPU/Mem，这行可以注释掉，或者保留作为防卫性编程
+        status = resourceSimulatorService.enrichDynamicMetrics(status);
 
-        // 计算集群健康状态
+        // 2. 🔥 核心优化：实时触发预测与异常检测
+        // 收到数据立刻算，不要等定时任务
+        anomalyDetectionService.detectClusterAnomaly(status);
+
+        // 3. 计算常规健康分 (Health Score - 用于展示)
+        // 注意：StabilityScore 是用于调度的，HealthScore 是用于大屏展示的
+        double healthScore = HealthEvaluator.calculateScore(status);
         String healthStatus = HealthEvaluator.evaluate(status);
+
+        status.setHealthScore(healthScore);
         status.setHealthStatus(healthStatus);
 
-        // 计算健康分值
-        double healthScore = HealthEvaluator.calculateScore(status);
-        status.setHealthScore(healthScore);
-
+        // 4. 更新内存缓存
         clusterMap.put(status.getClusterName(), status);
 
-        log.info("🩺 更新集群 [{}] 状态 => 健康等级={} | 健康分数={}",
+        log.debug("✅ 集群 [{}] 更新完毕: Health={}, Stability={}",
                 status.getClusterName(),
-                healthStatus,
-                String.format("%.2f", healthScore));
+                String.format("%.0f", healthScore),
+                String.format("%.0f", status.getStabilityScore()));
     }
 
-    /**
-     * 查看所有集群
-     * @return 所有集群信息
-     */
     @Override
     public List<ClusterStatus> getAllClusterStatus() {
         return new ArrayList<>(clusterMap.values());
     }
 
-    /**
-     * 定期对集群进行评分和健康的修改
-     */
-    @Scheduled(fixedRateString = "${global.cluster.health-eval-interval:30000}")
-    public void periodicEvaluateAll() {
-        log.info("🩺 定期健康评估任务开始...");
-
-        clusterMap.forEach((name, status) -> {
-            try {
-                // ✅ 计算健康状态和健康分
-                String healthStatus = HealthEvaluator.evaluate(status);
-                double healthScore = HealthEvaluator.calculateScore(status);
-
-                // ✅ 只更新字段，不重复 put
-                status.setHealthStatus(healthStatus);
-                status.setHealthScore(healthScore);
-
-                log.debug("🩸 集群 [{}] 健康评估完成 -> 状态={} | 分数={}",
-                        name, healthStatus, String.format("%.2f", healthScore));
-
-            } catch (Exception e) {
-                log.warn("⚠️ 集群 [{}] 健康评估失败: {}", name, e.getMessage());
-            }
-        });
-
-        log.info("✅ 本轮健康评估完成，共评估 {} 个集群", clusterMap.size());
-    }
 
 }

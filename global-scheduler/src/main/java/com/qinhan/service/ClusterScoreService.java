@@ -13,5 +13,5 @@ public interface ClusterScoreService {
      * @param clusterName 集群名称
      * @return ClusterScore 包含健康分和评估理由
      */
-    ClusterScore calculateScore(String clusterName);
+    ClusterScore calculateScore(String clusterName,String targetCluster);
 }

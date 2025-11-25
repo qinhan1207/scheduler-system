@@ -15,48 +15,60 @@ public class AnomalyDetectionServiceImpl implements AnomalyDetectionService {
 
     private final EwmaForecaster ewmaForecaster;
 
-    // 定义预测阈值，超过此值认为未来有风险
-    private static final double PREDICTED_LATENCY_THRESHOLD = 200.0; // ms
+    // 预测阈值：如果预测未来延迟超过 150ms，视为高风险
+    private static final double PREDICTED_LATENCY_THRESHOLD = 150.0;
+    // 预测阈值：如果预测未来丢包率超过 1%，视为高风险
+    private static final double PREDICTED_LOSS_THRESHOLD = 1.0;
 
     @Override
     public void detectClusterAnomaly(ClusterStatus status) {
         String clusterName = status.getClusterName();
 
-        // 1. 基础的静态检测 (保留你原有的逻辑)
+        // 1. 计算静态异常分 (基于当前值) - 用于记录现状
         double staticAnomalyScore = AnomalyDetectorUtil.calculateAnomalyScore(status);
+        status.setAnomalyScore(staticAnomalyScore);
 
-        // 2. 🔥 EWMA 预测逻辑 (新增)
-        // 预测下一时刻的网络延迟
+        // 2. 🔥 核心：执行 EWMA 时序预测 (预测未来)
+        // 我们只预测两个核心网络指标，不再关注带宽和存储
         double predictedLatency = ewmaForecaster.predict(clusterName, "latency", status.getNetworkLatency());
-        // 预测下一时刻的丢包率
         double predictedLoss = ewmaForecaster.predict(clusterName, "loss", status.getPacketLossRate());
 
-        // 3. 计算“稳定性得分” (Stability Score)
-        // 如果预测值很糟糕，哪怕当前值还行，也要扣分 —— 这就是“预测性调度”
+        // 3. 计算稳定性得分 (Stability Score) - 初始 100 分
+        // 这个分数反映了“未来一小段时间内该集群保持健康的概率”
         double stabilityScore = 100.0;
 
+        // 规则 A: 如果预测延迟过高，重罚
         if (predictedLatency > PREDICTED_LATENCY_THRESHOLD) {
-            stabilityScore -= 40; // 预测未来高延迟，重罚
-            log.warn("⚠️ [主动熔断预警] 集群 {} 预测延迟将达到 {}ms，存在抖动风险！",
-                    clusterName, String.format("%.2f", predictedLatency));
+            // 延迟越高扣分越狠，每超 10ms 多扣 5 分
+            double over = predictedLatency - PREDICTED_LATENCY_THRESHOLD;
+            stabilityScore -= (20 + (over / 10.0) * 5);
         }
 
-        if (predictedLoss > 2.0) { // 预测丢包 > 2%
-            stabilityScore -= 30;
+        // 规则 B: 如果预测丢包，直接熔断式扣分
+        if (predictedLoss > PREDICTED_LOSS_THRESHOLD) {
+            // 丢包对业务影响最大，直接扣 50 分起步
+            stabilityScore -= 50;
         }
 
-        // 4. 将预测结果回写到 Status 中，供调度器使用
-        status.setStabilityScore(Math.max(0, stabilityScore));
-        status.setAnomalyScore(staticAnomalyScore); // 保留静态分作为参考
+        // 规则 C: 结合静态异常分微调 (防止预测模型对于突发情况反应过度或不足)
+        if (staticAnomalyScore > 60) {
+            stabilityScore -= 10;
+        }
 
-        // 更新备注，方便调试查看
-        String remark = String.format("PredLatency:%.0fms, PredLoss:%.1f%%", predictedLatency, predictedLoss);
+        // 兜底限制 0~100
+        stabilityScore = Math.max(0, Math.min(100, stabilityScore));
+        status.setStabilityScore(stabilityScore);
+
+        // 4. 生成备注 (方便调试和论文截图)
+        String remark = String.format("Pred: Lat=%.0fms, Loss=%.1f%% | Stability=%.0f",
+                predictedLatency, predictedLoss, stabilityScore);
         status.setRemark(remark);
 
-        log.info("🧠 综合检测 [{}] -> 静态异常分:{} | 预测稳定性:{} | {}",
+
+        log.info("🧠 预测分析 [{}] -> 真实Lat:{}ms | 预测Lat:{}ms | 稳定性得分:{}",
                 clusterName,
-                String.format("%.2f", staticAnomalyScore),
-                String.format("%.2f", stabilityScore),
-                remark);
+                String.format("%.2f", status.getNetworkLatency()), // 改成 .2f
+                String.format("%.2f", predictedLatency),           // 改成 .2f
+                String.format("%.1f", stabilityScore));
     }
 }

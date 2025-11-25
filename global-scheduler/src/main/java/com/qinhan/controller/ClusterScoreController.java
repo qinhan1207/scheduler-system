@@ -21,15 +21,17 @@ public class ClusterScoreController {
     /**
      * 获取指定集群的健康评分
      * 示例请求：
-     *   GET /api/advisor/score?cluster=kwok-cluster01
+     * GET /api/advisor/score?cluster=kwok-cluster01
      *
      * @param clusterName 集群名称
      * @return ClusterScore 健康分结果
      */
     @GetMapping("/score")
-    public ClusterScore getClusterScore(@RequestParam("cluster") String clusterName) {
-        log.info("📩 收到插件评分请求: cluster={}", clusterName);
-        ClusterScore score = clusterScoreService.calculateScore(clusterName);
+    public ClusterScore getClusterScore(@RequestParam("cluster") String clusterName,
+                                        @RequestParam(value = "target", required = false) String targetCluster) {
+        log.info("📩 评分请求: cluster={}, target={}", clusterName, targetCluster);
+        // 传入 targetCluster
+        ClusterScore score = clusterScoreService.calculateScore(clusterName, targetCluster);
         log.info("📤 返回评分结果: {}", score);
         return score;
     }
@@ -38,7 +40,7 @@ public class ClusterScoreController {
      * 测试接口（可选）
      * 用于验证 Java 服务运行正常。
      * 示例请求：
-     *   GET /api/advisor/ping
+     * GET /api/advisor/ping
      */
     @GetMapping("/ping")
     public String ping() {

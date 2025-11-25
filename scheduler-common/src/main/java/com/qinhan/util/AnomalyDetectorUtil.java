@@ -10,47 +10,34 @@ public class AnomalyDetectorUtil {
      * 当前为基于规则的静态算法，可扩展为 ML 模型推理。
      */
     public static double calculateAnomalyScore(ClusterStatus status) {
-        if (status == null) {
-            log.warn("⚠️ AnomalyDetector: 收到空的 ClusterStatus，跳过计算。");
-            return 0;
-        }
+        if (status == null) return 0;
 
-        // 基础指标
-        double latency = status.getNetworkLatency();       // ms
-        double loss = status.getPacketLossRate();          // %
-        double bandwidth = status.getNetworkBandwidth();   // Mbps
-        double storage = status.getStorageUsage();         // %
+        // 1. 网络维度 (权重 60%)
+        double latency = status.getNetworkLatency();
+        double loss = status.getPacketLossRate();
 
-        // =============== 1️⃣ 归一化处理 ===============
-        // 限定合理范围，避免极端值导致计算偏移
-        latency = Math.min(latency, 500);           // 超过 500ms 视为极慢
-        loss = Math.min(loss, 5);                   // 丢包率上限 5%
-        bandwidth = Math.max(Math.min(bandwidth, 200), 0);  // Mbps
-        storage = Math.min(storage, 100);
+        // 归一化：延迟 > 300ms 算满分异常，丢包 > 5% 算满分异常
+        double netScore = (Math.min(latency, 300) / 300.0 * 50) +
+                (Math.min(loss, 5) / 5.0 * 50);
 
-        // =============== 2️⃣ 异常分计算 ===============
-        // 延迟与丢包：直接按比例放大
-        double latencyScore = (latency / 500) * 100;          // 高延迟 → 高异常分
-        double lossScore = (loss / 5) * 100;                  // 高丢包 → 高异常分
-        // 带宽：越小越异常
-        double bandwidthScore = (1 - (bandwidth / 200)) * 100;
-        // 存储：若高占用但 Pod 未明显增长，可考虑异常（此处简化处理）
-        double storageScore = (storage / 100) * 100;
+        // 2. 资源维度 (权重 40%) - 这里把 CPU/内存加回来！
+        // 这样静态检测就能发现“资源耗尽”的异常了
+        double cpu = status.getCpuUsage();
+        double mem = status.getMemoryUsage();
 
-        // =============== 3️⃣ 加权融合 ===============
-        double anomalyScore =
-                0.35 * latencyScore +
-                        0.30 * lossScore +
-                        0.25 * bandwidthScore +
-                        0.10 * storageScore;
+        // 资源 > 80% 开始计入异常分
+        double resScore = 0;
+        if (cpu > 80) resScore += (cpu - 80) * 2.5; // 80->0, 100->50
+        if (mem > 80) resScore += (mem - 80) * 2.5;
 
-        // 限制范围
-        anomalyScore = Math.max(0, Math.min(anomalyScore, 100));
+        // 3. 综合加权
+        // 异常分越高越不好
+        double finalScore = (netScore * 0.6) + (resScore * 0.4);
 
-        log.debug("🤖 异常检测 => 集群={} | 延迟={}ms 丢包={} 带宽={}Mbps 存储={}%",
-                status.getClusterName(), latency, loss, bandwidth, storage);
+        log.debug("🤖 异常检测 => 集群={} | 延迟={}ms 丢包={}",
+                status.getClusterName(), latency, loss);
 
-        return anomalyScore;
+        return Math.max(0, Math.min(100, finalScore));
     }
 
     /**
