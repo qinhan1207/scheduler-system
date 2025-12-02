@@ -1,18 +1,18 @@
 package com.qinhan.service.impl;
 
 import com.qinhan.model.ClusterStatus;
+import com.qinhan.properties.LsaClusterConfigProperties;
 import com.qinhan.service.ClusterMonitorService;
 import com.qinhan.util.K8sClientUtil;
+import com.qinhan.util.NetworkUtils; // 核心引入：使用系统级 Ping 工具
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1NodeList;
 import io.kubernetes.client.openapi.models.V1PodList;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.URI;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,21 +22,16 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class ClusterMonitorServiceImpl implements ClusterMonitorService {
 
+    @Autowired
+    private LsaClusterConfigProperties lsaProperties;
+
     private final K8sClientUtil k8sClientUtil;
 
-    // 模拟邻居列表（后续应该从 Global Scheduler 动态拉取）
-    // Key: 集群名, Value: 目标IP:端口 (NodePort)
-    // 在 Kind 环境中，不同集群可以通过 Linux 宿主机 IP + NodePort 互通
-    private final Map<String, String> peerTargets = new ConcurrentHashMap<>();
+    private static final double LATENCY_SLA_THRESHOLD = 500.0;
+    private static final double MAX_PENALTY_LATENCY = 2000.0;
 
     public ClusterMonitorServiceImpl(K8sClientUtil k8sClientUtil) {
         this.k8sClientUtil = k8sClientUtil;
-        // 暂时硬编码邻居地址用于测试 (假设 Linux 宿主机 IP 是 10.11.17.222)
-        // 如果我是 member1 (30001)，我要测 member2 和 member3
-        // 注意：实际部署时，这些信息应该动态获取或配置
-        peerTargets.put("member1", "10.11.17.222:30001");
-        peerTargets.put("member2", "10.11.17.222:30002");
-        peerTargets.put("member3", "10.11.17.222:30003");
     }
 
     @Override
@@ -56,66 +51,82 @@ public class ClusterMonitorServiceImpl implements ClusterMonitorService {
     @Override
     public ClusterStatus collectClusterStatus(String kubeconfigPath) {
         try {
-            // 1. 获取 Client (支持 In-Cluster 模式)
             ApiClient client = k8sClientUtil.getClient(kubeconfigPath);
             CoreV1Api api = new CoreV1Api(client);
-
-            // 2. 采集基础资源 (CPU/Mem)
             V1NodeList nodes = api.listNode().execute();
             V1PodList pods = api.listPodForAllNamespaces().execute();
-
             int nodeCount = nodes.getItems().size();
             int podCount = pods.getItems().size();
-
-            // ... 简单的模拟资源计算逻辑 ...
-            // 这里为了演示，保留原有模拟逻辑，实际可改为从 Metrics Server 获取
             int pendingPods = (int) pods.getItems().stream()
                     .filter(p -> p.getStatus() != null && "Pending".equalsIgnoreCase(p.getStatus().getPhase()))
                     .count();
-
             double cpuUsage = Math.min(99.0, podCount * 2.5);
             double memoryUsage = Math.min(99.0, podCount * 3.0);
 
+            // --- 3. 核心网络指标采集 ---
+            Map<String, NetworkUtils.NetworkStats> rawStatsMap = probeNeighborsStats();
 
-            // 3. 采集网络指标 (Ping 邻居) - 这是核心新增逻辑 🔥
-            Map<String, Double> latencyMap = probeNeighbors();
-
-            // 计算聚合网络指标
+            Map<String, Double> peerLatencyMap = new HashMap<>();
             double avgLatency = 0.0;
-            double packetLossRate = 0.0;
+            double reportedPacketLossRate = 0.0; // 上报的自身丢包率
 
-            if (!latencyMap.isEmpty()) {
-                // (1) 平均延迟：只统计连接成功的节点 (值 < 999)
-                avgLatency = latencyMap.values().stream()
-                        .mapToDouble(Double::doubleValue)
-                        .filter(v -> v < 999.0)
-                        .average()
-                        .orElse(0.0);
+            if (!rawStatsMap.isEmpty()) {
+                double validLatencySum = 0.0;
+                int validLinkCount = 0;
+                double totalRawLossRate = 0.0;
 
-                // (2) 丢包率：统计连接超时/失败的节点 (值 >= 999)
-                long timeoutCount = latencyMap.values().stream()
-                        .filter(v -> v >= 999.0)
-                        .count();
+                for (Map.Entry<String, NetworkUtils.NetworkStats> entry : rawStatsMap.entrySet()) {
+                    String name = entry.getKey();
+                    NetworkUtils.NetworkStats stats = entry.getValue();
 
-                // 丢包率 = 失败次数 / 总探测次数
-                packetLossRate = ((double) timeoutCount / latencyMap.size()) * 100.0;
+                    // 1. 判断链路好坏 (丢包极低 且 延迟达标)
+                    boolean isLinkHealthy = (stats.getLossRate() < 0.1) && (stats.getAvgLatency() < LATENCY_SLA_THRESHOLD);
+
+                    // 2. 构建详细 Map (保留坏链路的高延迟信息，供调度器做点对点规避)
+                    double displayLatency = stats.getAvgLatency();
+                    if (stats.getLossRate() > 0) {
+                        displayLatency += stats.getLossRate() * 20.0;
+                    }
+                    peerLatencyMap.put(name, displayLatency);
+
+                    // 3. 统计健康链路
+                    if (isLinkHealthy) {
+                        validLatencySum += stats.getAvgLatency();
+                        validLinkCount++;
+                    }
+
+                    totalRawLossRate += stats.getLossRate();
+                }
+
+                // --- 4. 聚合计算 (引入"自证清白"逻辑) ---
+
+                // 计算平均延迟
+                if (validLinkCount > 0) {
+                    avgLatency = validLatencySum / validLinkCount;
+                } else {
+                    avgLatency = MAX_PENALTY_LATENCY;
+                }
+
+                // 计算丢包率 (Self-Vindication Logic)
+                // 只有当连不上任何邻居时，才承认是自己丢包
+                if (validLinkCount > 0) {
+                    reportedPacketLossRate = 0.0;
+                } else {
+                    reportedPacketLossRate = totalRawLossRate / rawStatsMap.size();
+                }
             }
 
-
-            // 4. 构建 Status
             return ClusterStatus.builder()
                     .timestamp(Instant.now().toEpochMilli())
                     .apiServerAddress(client.getBasePath())
-                    // 资源指标
                     .nodeCount(nodeCount)
                     .podCount(podCount)
                     .pendingPods(pendingPods)
                     .cpuUsage(cpuUsage)
                     .memoryUsage(memoryUsage)
-                    // 网络指标
                     .networkLatency(avgLatency)
-                    .packetLossRate(packetLossRate)
-                    .peerLatencyMap(latencyMap)
+                    .packetLossRate(reportedPacketLossRate) // 这里的丢包率经过了逻辑修正
+                    .peerLatencyMap(peerLatencyMap)
                     .build();
 
         } catch (Exception e) {
@@ -124,63 +135,47 @@ public class ClusterMonitorServiceImpl implements ClusterMonitorService {
         }
     }
 
-    /**
-     * 探测所有邻居的延迟
-     */
-    public Map<String, Double> probeNeighbors() {
-        Map<String, Double> result = new HashMap<>();
+    private Map<String, String> getNeighborIps() {
+        Map<String, String> neighbors = new HashMap<>();
+        neighbors.put("member1", "member1-control-plane");
+        neighbors.put("member2", "member2-control-plane");
+        neighbors.put("member3", "member3-control-plane");
 
-        peerTargets.forEach((name, address) -> {
-            try {
-                String[] parts = address.split(":");
-                String host = parts[0];
-                int port = Integer.parseInt(parts[1]);
+        String myName = lsaProperties.getCurrentClusterName(); // 确保你注入了 LsaProperties
+        if (myName != null && neighbors.containsKey(myName)) {
+            neighbors.remove(myName);
+        }
+        return neighbors;
+    }
 
-                // 探测 RTT
-                double rtt = measureTcpLatency(host, port);
-                result.put(name, rtt);
-            } catch (Exception e) {
-                log.warn("解析邻居地址失败: {}", address);
+    public Map<String, NetworkUtils.NetworkStats> probeNeighborsStats() {
+        Map<String, NetworkUtils.NetworkStats> result = new ConcurrentHashMap<>();
+        Map<String, String> neighbors = getNeighborIps();
+
+        neighbors.entrySet().parallelStream().forEach(entry -> {
+            String name = entry.getKey();
+            String target = entry.getValue();
+            NetworkUtils.NetworkStats stats = NetworkUtils.ping(target, 5, 2);
+            result.put(name, stats);
+            // 减少日志噪音，只有真正有问题才打印
+            if (stats.getLossRate() > 0) {
+                log.info("⚠️ [Probe] Cluster={} Target={} Loss={}%, Lat={}ms",
+                        name, target, stats.getLossRate(), stats.getAvgLatency());
             }
         });
-
         return result;
     }
 
     /**
-     * 测量 TCP 连接延迟
-     * 支持指定 Host 和 Port (不再局限于 API Server)
+     * 兼容旧接口，并确保逻辑一致性
+     * 这里的 Latency 也会加上丢包惩罚，避免外部调用时看到的数据不一致
      */
-    private double measureTcpLatency(String host, int port) {
-        try {
-            double totalLatency = 0.0;
-            int attempts = 3; // 探测 3 次
-            int successCount = 0;
-
-            for (int i = 0; i < attempts; i++) {
-                long start = System.nanoTime();
-                try (Socket socket = new Socket()) {
-                    // 设置 2秒 超时
-                    socket.connect(new InetSocketAddress(host, port), 2000);
-
-                    double elapsedMs = (System.nanoTime() - start) / 1_000_000.0;
-                    totalLatency += elapsedMs;
-                    successCount++;
-                } catch (Exception ignored) {
-                    // 连接失败，不计入 totalLatency，但在 successCount 中体现
-                }
-
-                // 稍微间隔一下，避免被防火墙认定为攻击
-                if (i < attempts - 1) Thread.sleep(50);
-            }
-
-            // 如果至少成功一次，返回平均延迟；否则返回 999.0
-            return successCount > 0 ? (totalLatency / successCount) : 999.0;
-
-        } catch (Exception e) {
-            return 999.0;
-        }
+    public Map<String, Double> probeNeighbors() {
+        Map<String, Double> result = new HashMap<>();
+        probeNeighborsStats().forEach((k, v) -> {
+            double penalty = v.getLossRate() * 20.0;
+            result.put(k, v.getAvgLatency() + penalty);
+        });
+        return result;
     }
-
-
 }
