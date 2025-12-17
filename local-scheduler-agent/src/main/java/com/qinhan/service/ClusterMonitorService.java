@@ -4,7 +4,7 @@ import com.qinhan.model.ClusterStatus;
 
 /**
  * 负责监控成员集群状态的服务接口
- * 包括节点数、Pod数、CPU/内存使用率采集等
+ * 当前仅采集网络可达性与延迟/丢包原始探测结果
  */
 public interface ClusterMonitorService {
 

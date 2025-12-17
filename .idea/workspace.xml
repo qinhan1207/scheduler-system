@@ -4,16 +4,20 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(scheduler): 添加调度结果模型并更新集群状态字段&#10;&#10;- 新增 ScheduleResult 类用于记录 Karmada 调度任务的结果&#10;- 在 ClusterStatus 中添加 id 和 createdAt 字段&#10;- 更新 application.yaml 中的集群配置名称和路径&#10;- 提供调度历史存储及监督学习标签支持">
-      <change afterPath="$PROJECT_DIR$/local-scheduler-agent/Dockerfile" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/local-scheduler-agent/deploy/agent-deploy.yaml" afterDir="false" />
+    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="feat(cluster): 引入系统级Ping工具优化网络监控&#10;&#10;- 使用NetworkUtils替代原生TCP探测，提升准确性&#10;- 新增丢包率与延迟惩罚机制，增强链路质量评估&#10;- 实现&quot;自证清白&quot;逻辑，避免误判自身网络故障&#10;- 动态获取邻居节点信息，去除硬编码配置&#10;- 优化日志输出，仅在异常时记录探测详情&#10;- 调整上报日志，增加丢包率展示字段">
+      <change afterPath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/RawNetworkStats.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/ResourceSimulatorService.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/ResourceSimulatorService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/MemberClusterServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/MemberClusterServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/ResourceSimulatorServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/ResourceSimulatorServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/ClusterMonitorService.java" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/ClusterMonitorService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ClusterMonitorServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ClusterMonitorServiceImpl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ReportServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ReportServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/resources/application.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/test/java/com/qinhan/LocalSchedulerAgentApplicationTests.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/properties/LsaClusterConfigProperties.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/properties/LsaClusterConfigProperties.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/K8sClientUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/K8sClientUtil.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/AnomalyDetectorUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/AnomalyDetectorUtil.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/HealthEvaluator.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/HealthEvaluator.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/ClusterStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/ClusterStatus.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -55,6 +59,7 @@
   </component>
   <component name="MavenRunner">
     <option name="jreName" value="#JAVA_HOME" />
+    <option name="skipTests" value="true" />
   </component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="CurrentFile" />
@@ -101,11 +106,11 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
     &quot;run.configurations.included.in.services&quot;: &quot;true&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;Qoder&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
@@ -285,6 +290,34 @@
       <workItem from="1763550735558" duration="7000" />
       <workItem from="1763700331209" duration="10521000" />
       <workItem from="1763721099318" duration="1206000" />
+      <workItem from="1763865717863" duration="3913000" />
+      <workItem from="1763948532278" duration="18608000" />
+      <workItem from="1763984750592" duration="116000" />
+      <workItem from="1764044075361" duration="6900000" />
+      <workItem from="1764070182823" duration="11000" />
+      <workItem from="1764127057881" duration="12816000" />
+      <workItem from="1764155043971" duration="16000" />
+      <workItem from="1764230502712" duration="1382000" />
+      <workItem from="1764306811274" duration="11565000" />
+      <workItem from="1764327739859" duration="4000" />
+      <workItem from="1764553347224" duration="6039000" />
+      <workItem from="1764590818424" duration="27000" />
+      <workItem from="1764640865080" duration="11622000" />
+      <workItem from="1764680685106" duration="23000" />
+      <workItem from="1764818495890" duration="4000" />
+      <workItem from="1765163759071" duration="1825000" />
+      <workItem from="1765193077421" duration="8000" />
+      <workItem from="1765350917851" duration="121000" />
+      <workItem from="1765365676931" duration="3000" />
+      <workItem from="1765423337125" duration="1638000" />
+      <workItem from="1765508133121" duration="287000" />
+      <workItem from="1765776825596" duration="3327000" />
+      <workItem from="1765797369642" duration="4000" />
+      <workItem from="1765859799077" duration="1269000" />
+      <workItem from="1765883896529" duration="8000" />
+      <workItem from="1765952618637" duration="1473000" />
+      <workItem from="1765954107856" duration="2205000" />
+      <workItem from="1765958215328" duration="3409000" />
     </task>
     <task id="LOCAL-00001" summary="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构">
       <option name="closed" value="true" />
@@ -446,7 +479,39 @@
       <option name="project" value="LOCAL" />
       <updated>1763700579035</updated>
     </task>
-    <option name="localTasksCounter" value="21" />
+    <task id="LOCAL-00021" summary="feat(local-scheduler-agent): 实现分布式模式部署与网络探测功能&#10;&#10;- 新增 Kubernetes RBAC 配置与 Deployment YAML，支持分布式部署&#10;- 扩展 ClusterStatus 模型，增加邻居延迟与丢包率映射表&#10;- 重构 K8sClientUtil，支持 In-Cluster 模式自动加载配置&#10;- 改造 ReportService，根据运行模式切换采集逻辑（自身 vs 多集群）&#10;- 更新 LsaClusterConfigProperties，支持 standalone 与 distributed 模式切换&#10;- 添加 Dockerfile 支持镜像构建&#10;- 移除旧测试类，优化网络探测方法并支持多目标 RTT 测量&#10;- 调整采集频率至每10秒一次，提升监控实时性">
+      <option name="closed" value="true" />
+      <created>1763865795655</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1763865795655</updated>
+    </task>
+    <task id="LOCAL-00022" summary="feat(scheduler): 引入基于EWMA的预测性异常检测机制&#10;&#10;- 新增 EwmaForecaster 类用于时序预测，支持自适应平滑因子调节&#10;- 在 AnomalyDetectionServiceImpl 中集成预测逻辑，增强异常判断能力&#10;- 实现对未来网络延迟和丢包率的预测，并引入稳定性评分机制&#10;- 添加集群状态中预测结果的记录功能，为调度决策提供依据&#10;- 日志中增加预测值与实际值的对比信息，便于问题追踪与分析&#10;- 使用 Lombok 注解优化代码结构，提升可维护性">
+      <option name="closed" value="true" />
+      <created>1763951717102</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1763951717102</updated>
+    </task>
+    <task id="LOCAL-00023" summary="feat(scheduler): 实现基于EWMA的集群稳定性预测与亲和性调度优化&#10;&#10;- 在 AnomalyDetectionService 中引入 EWMA 预测模型，实现对未来网络延迟和丢包率的预测&#10;- 新增 StabilityScore 计算逻辑，结合预测结果与静态异常分，用于评估集群未来稳定性&#10;- 优化 ClusterStatus 数据结构，强化网络与资源指标采集，剔除冗余字段&#10;- 改进 ClusterScoreService，支持传入目标集群参数，实现基于网络拓扑的亲和性评分&#10;- 调整 HealthEvaluator 权重策略，提升网络指标在健康评分中的占比至 80%&#10;- 移除定时健康评估任务，改为在集群状态更新时实时触发异常检测与评分计算&#10;- 优化本地监控代理的网络探测逻辑，提高丢包率计算准确性与连接超时处理能力">
+      <option name="closed" value="true" />
+      <created>1764046036236</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1764046036236</updated>
+    </task>
+    <task id="LOCAL-00024" summary="feat(cluster): 引入系统级Ping工具优化网络监控&#10;&#10;- 使用NetworkUtils替代原生TCP探测，提升准确性&#10;- 新增丢包率与延迟惩罚机制，增强链路质量评估&#10;- 实现&quot;自证清白&quot;逻辑，避免误判自身网络故障&#10;- 动态获取邻居节点信息，去除硬编码配置&#10;- 优化日志输出，仅在异常时记录探测详情&#10;- 调整上报日志，增加丢包率展示字段">
+      <option name="closed" value="true" />
+      <created>1764640887199</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1764640887199</updated>
+    </task>
+    <option name="localTasksCounter" value="25" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -496,6 +561,14 @@
     <MESSAGE value="feat(scheduler-common):重构健康评估逻辑以支持网络与存储指标&#10;&#10;- 使用 switch 替换 if-else 判断健康状态描述&#10;- 新增网络延迟、带宽、丢包率和存储使用率作为评估维度&#10;- 引入权重配置并重新设计评分算法（0~100）- 更新日志输出内容以反映新的评估标准&#10;- 移除旧版基于 CPU/内存的简单阈值判断- 调整 ClusterScoreServiceImpl 中的状态描述文案" />
     <MESSAGE value="feat(scheduler): 新增集群异常检测功能- 新增异常检测服务接口及其实现类，支持集群状态异常评分与等级判定&#10;- 新增定时任务 AnomalyDetectionTask，定期执行异常检测逻辑- 新增工具类 AnomalyDetectorUtil，提供异常分数计算与异常等级判断方法&#10;- 调整本地调度器中网络与存储指标的模拟逻辑，增强数据真实性" />
     <MESSAGE value="feat(scheduler): 添加调度结果模型并更新集群状态字段&#10;&#10;- 新增 ScheduleResult 类用于记录 Karmada 调度任务的结果&#10;- 在 ClusterStatus 中添加 id 和 createdAt 字段&#10;- 更新 application.yaml 中的集群配置名称和路径&#10;- 提供调度历史存储及监督学习标签支持" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(scheduler): 添加调度结果模型并更新集群状态字段&#10;&#10;- 新增 ScheduleResult 类用于记录 Karmada 调度任务的结果&#10;- 在 ClusterStatus 中添加 id 和 createdAt 字段&#10;- 更新 application.yaml 中的集群配置名称和路径&#10;- 提供调度历史存储及监督学习标签支持" />
+    <MESSAGE value="feat(local-scheduler-agent): 实现分布式模式部署与网络探测功能&#10;&#10;- 新增 Kubernetes RBAC 配置与 Deployment YAML，支持分布式部署&#10;- 扩展 ClusterStatus 模型，增加邻居延迟与丢包率映射表&#10;- 重构 K8sClientUtil，支持 In-Cluster 模式自动加载配置&#10;- 改造 ReportService，根据运行模式切换采集逻辑（自身 vs 多集群）&#10;- 更新 LsaClusterConfigProperties，支持 standalone 与 distributed 模式切换&#10;- 添加 Dockerfile 支持镜像构建&#10;- 移除旧测试类，优化网络探测方法并支持多目标 RTT 测量&#10;- 调整采集频率至每10秒一次，提升监控实时性" />
+    <MESSAGE value="feat(scheduler): 引入基于EWMA的预测性异常检测机制&#10;&#10;- 新增 EwmaForecaster 类用于时序预测，支持自适应平滑因子调节&#10;- 在 AnomalyDetectionServiceImpl 中集成预测逻辑，增强异常判断能力&#10;- 实现对未来网络延迟和丢包率的预测，并引入稳定性评分机制&#10;- 添加集群状态中预测结果的记录功能，为调度决策提供依据&#10;- 日志中增加预测值与实际值的对比信息，便于问题追踪与分析&#10;- 使用 Lombok 注解优化代码结构，提升可维护性" />
+    <MESSAGE value="feat(scheduler): 实现基于EWMA的集群稳定性预测与亲和性调度优化&#10;&#10;- 在 AnomalyDetectionService 中引入 EWMA 预测模型，实现对未来网络延迟和丢包率的预测&#10;- 新增 StabilityScore 计算逻辑，结合预测结果与静态异常分，用于评估集群未来稳定性&#10;- 优化 ClusterStatus 数据结构，强化网络与资源指标采集，剔除冗余字段&#10;- 改进 ClusterScoreService，支持传入目标集群参数，实现基于网络拓扑的亲和性评分&#10;- 调整 HealthEvaluator 权重策略，提升网络指标在健康评分中的占比至 80%&#10;- 移除定时健康评估任务，改为在集群状态更新时实时触发异常检测与评分计算&#10;- 优化本地监控代理的网络探测逻辑，提高丢包率计算准确性与连接超时处理能力" />
+    <MESSAGE value="feat(cluster): 引入系统级Ping工具优化网络监控&#10;&#10;- 使用NetworkUtils替代原生TCP探测，提升准确性&#10;- 新增丢包率与延迟惩罚机制，增强链路质量评估&#10;- 实现&quot;自证清白&quot;逻辑，避免误判自身网络故障&#10;- 动态获取邻居节点信息，去除硬编码配置&#10;- 优化日志输出，仅在异常时记录探测详情&#10;- 调整上报日志，增加丢包率展示字段" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(cluster): 引入系统级Ping工具优化网络监控&#10;&#10;- 使用NetworkUtils替代原生TCP探测，提升准确性&#10;- 新增丢包率与延迟惩罚机制，增强链路质量评估&#10;- 实现&quot;自证清白&quot;逻辑，避免误判自身网络故障&#10;- 动态获取邻居节点信息，去除硬编码配置&#10;- 优化日志输出，仅在异常时记录探测详情&#10;- 调整上报日志，增加丢包率展示字段" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>

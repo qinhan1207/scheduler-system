@@ -32,19 +32,6 @@ public class ClusterStatus {
     /** Agent 采集时的各时间戳 */
     private long timestamp;
 
-    // ================== 核心资源指标 ==================
-    /** 节点数量 */
-    private int nodeCount;
-
-    /** Pod 数量 (用于反映负载密度) */
-    private int podCount;
-
-    /** CPU 使用率（百分比 0-100） */
-    private double cpuUsage;
-
-    /** 内存使用率（百分比 0-100） */
-    private double memoryUsage;
-
     // ================== 核心网络指标 (本课题创新点) ==================
     /** 平均网络延迟 (ms) - 用于快速筛选 */
     private double networkLatency;
@@ -52,18 +39,14 @@ public class ClusterStatus {
     /** 丢包率 (%) - 反映网络稳定性 */
     private double packetLossRate;
 
+    /** 原始探测结果：到各邻居的 RTT/丢包率 */
+    private Map<String, RawNetworkStats> peerRawStats;
+
     /** * 🔥 全域感知矩阵：我到其他集群的 RTT 延迟
      * Key: 目标集群名称 (e.g., "member-2"), Value: RTT (ms)
      * 调度器将利用此 Map 计算亲和性距离
      */
     private Map<String, Double> peerLatencyMap;
-
-    // ================== 调度与负载指标 ==================
-    /** * Pending Pod 数量
-     * 能够最直观地反映集群是否资源耗尽或调度受阻
-     */
-    private int pendingPods;
-
 
     // ================== 异常检测与预测结果 (由 GS 计算回填) ==================
     /** 异常检测得分（0-100） */
@@ -84,17 +67,4 @@ public class ClusterStatus {
     /** 数据入库时间 (服务端生成) */
     private Instant createdAt;
 
-    // ================== 工具方法 ==================
-    public static ClusterStatus simple(String clusterName, int nodeCount, int podCount, double cpu, double mem) {
-        ClusterStatus status = new ClusterStatus();
-        status.setClusterName(clusterName);
-        status.setNodeCount(nodeCount);
-        status.setPodCount(podCount);
-        status.setCpuUsage(cpu);
-        status.setMemoryUsage(mem);
-        status.setTimestamp(Instant.now().toEpochMilli());
-        status.setHealthStatus(cpu > 90 || mem > 90 ? "Warning" : "Healthy");
-        status.setHealthScore(Math.max(0, 100 - (cpu + mem) / 2));
-        return status;
-    }
 }

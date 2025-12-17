@@ -9,10 +9,9 @@ import lombok.extern.slf4j.Slf4j;
  * 用于计算集群的“常规健康分” (Health Score)。
  * 该分数反映了集群当前的综合承载能力。
  *
- * 评估维度 (重网络，轻资源)：
- * 1. 网络延迟 (50%): 核心指标，反映跨域通信质量
+ * 评估维度：完全基于网络
+ * 1. 网络延迟 (70%): 核心指标，反映跨域通信质量
  * 2. 丢包率 (30%): 核心指标，反映网络稳定性
- * 3. CPU使用率 (20%): 基础指标，防止调度到资源枯竭的节点
  *
  * 输出：
  * - 健康等级（Healthy / Warning / Critical）
@@ -22,10 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 public class HealthEvaluator {
 
     // ===================== 权重配置 =====================
-    // 策略：80% 关注网络 (符合论文创新点)，20% 关注基础资源
-    private static final double W_LATENCY = 0.50;     // 网络延迟权重 (50%)
+    private static final double W_LATENCY = 0.70;     // 网络延迟权重 (70%)
     private static final double W_LOSS = 0.30;        // 丢包率权重 (30%)
-    private static final double W_CPU = 0.20;         // CPU负载权重 (20%)
 
 
     // ===================== 主要计算方法 =====================
@@ -65,7 +62,6 @@ public class HealthEvaluator {
         // ---------- 1️⃣ 获取指标 ----------
         double latency = status.getNetworkLatency();      // ms
         double loss = status.getPacketLossRate();         // %
-        double cpu = status.getCpuUsage();                // %
 
         // ---------- 2️⃣ 各指标得分计算（归一化到 0~100） ----------
 
@@ -79,25 +75,19 @@ public class HealthEvaluator {
         // 公式：100 - (loss * 20)
         double lossScore = Math.max(0, 100 - (loss * 20.0));
 
-        // (C) CPU 得分：反转资源使用率
-        // 逻辑：CPU 10%=90分，CPU 90%=10分
-        double cpuScore = Math.max(0, 100 - cpu);
-
         // ---------- 3️⃣ 综合加权 ----------
         double totalScore =
                 (W_LATENCY * latencyScore) +
-                        (W_LOSS * lossScore) +
-                        (W_CPU * cpuScore);
+                (W_LOSS * lossScore);
 
         // 兜底限制 0~100
         totalScore = Math.max(0, Math.min(100, totalScore));
 
         log.debug(
-                "💡 打分明细 [{}] : Lat({}ms)={} | Loss({}%)={} | CPU({}%)={} => 总分={}",
+                "💡 打分明细 [{}] : Lat({}ms)={} | Loss({}%)={} => 总分={}",
                 status.getClusterName(),
                 String.format("%.1f", latency), String.format("%.1f", latencyScore),
                 String.format("%.1f", loss),    String.format("%.1f", lossScore),
-                String.format("%.1f", cpu),     String.format("%.1f", cpuScore),
                 String.format("%.1f", totalScore)
         );
 

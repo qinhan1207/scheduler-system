@@ -56,13 +56,11 @@ public class ReportServiceImpl implements ReportService {
                 // 上报
                 globalSchedulerClient.sendClusterStatus(status);
 
-                int neighborCount = (status.getPeerLatencyMap() != null) ? status.getPeerLatencyMap().size() : 0;
-                // 修改后的日志：增加了丢包率字段
-                log.info("✅ 上报成功: 集群={} | 延迟={}ms | 丢包率={}% | 探测邻居数={}",
+                int neighborCount = (status.getPeerRawStats() != null) ? status.getPeerRawStats().size() : 0;
+                log.info("✅ 上报成功: 集群={} | 探测邻居数={} | 原始探测样本={}",
                         clusterName,
-                        String.format("%.2f", status.getNetworkLatency()),
-                        String.format("%.2f", status.getPacketLossRate()), // 新增：显示平均丢包率
-                        neighborCount);
+                        neighborCount,
+                        neighborCount > 0 ? status.getPeerRawStats() : "none");
             }
         } catch (Exception e) {
             log.error("❌ 本地集群 [{}] 上报失败: {}", clusterName, e.getMessage());
