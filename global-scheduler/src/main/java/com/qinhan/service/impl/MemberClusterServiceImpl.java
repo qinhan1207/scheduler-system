@@ -4,7 +4,6 @@ import com.qinhan.model.ClusterStatus;
 import com.qinhan.model.RawNetworkStats;
 import com.qinhan.service.AnomalyDetectionService;
 import com.qinhan.service.MemberClusterService;
-import com.qinhan.util.HealthEvaluator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,23 +33,24 @@ public class MemberClusterServiceImpl implements MemberClusterService {
         // 1. 聚合网络探测结果：LSA 只上报原始探测值，这里做延迟/丢包的统一口径计算
         status = aggregateNetworkMetrics(status);
 
-        // 2. 🔥 核心优化：实时触发预测与异常检测
+        // 打印聚合后的 ClusterStatus 详细信息
+        log.info("📊 聚合后集群状态 [{}]: 网络延迟={}ms, 丢包率={}%, 对等节点延迟={}",
+                status.getClusterName(),
+                String.format("%.2f", status.getNetworkLatency()),
+                String.format("%.2f", status.getPacketLossRate()),
+                status.getPeerLatencyMap());
+
+        // 2. 🔥 核心优化：实时触发预测与异常检测，获得异常分与稳定性得分
         // 收到数据立刻算，不要等定时任务
         anomalyDetectionService.detectClusterAnomaly(status);
 
-        // 3. 计算常规健康分 (Health Score - 用于展示)
-        double healthScore = HealthEvaluator.calculateScore(status);
-        String healthStatus = HealthEvaluator.evaluate(status);
-
-        status.setHealthScore(healthScore);
-        status.setHealthStatus(healthStatus);
 
         // 4. 更新内存缓存
         clusterMap.put(status.getClusterName(), status);
 
-        log.debug("✅ 集群 [{}] 更新完毕: Health={}, Stability={}",
+        log.debug("✅ 集群 [{}] 更新完毕: Anomaly={}, Stability={}",
                 status.getClusterName(),
-                String.format("%.0f", healthScore),
+                String.format("%.0f", status.getAnomalyScore()),
                 String.format("%.0f", status.getStabilityScore()));
     }
 
@@ -60,6 +60,7 @@ public class MemberClusterServiceImpl implements MemberClusterService {
     }
 
 
+    // 聚合网络探测结果
     private ClusterStatus aggregateNetworkMetrics(ClusterStatus status) {
         Map<String, RawNetworkStats> rawMap = status.getPeerRawStats();
 

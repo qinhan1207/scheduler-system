@@ -27,7 +27,7 @@ public class MemberClusterController {
      */
     @PostMapping("/report")
     public String reportStatus(@RequestBody ClusterStatus status) {
-        log.info("接收上报的数据:{}",status);
+        log.info("接收上报的原始数据:{}",status);
         memberClusterService.updateClusterStatus(status);
         return "✅ Received status from cluster: " + status.getClusterName();
     }

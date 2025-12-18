@@ -12,21 +12,26 @@ public class AnomalyDetectorUtil {
     public static double calculateAnomalyScore(ClusterStatus status) {
         if (status == null) return 0;
 
-        // 1. 网络维度 (权重 60%)
+        //  网络维度
         double latency = status.getNetworkLatency();
         double loss = status.getPacketLossRate();
 
         // 归一化：延迟 > 300ms 算满分异常，丢包 > 5% 算满分异常
-        double netScore = (Math.min(latency, 300) / 300.0 * 50) +
+        // 1.丢包维度
+        // ⚠️ 注意：由于 LSA 采用 ping -c 5，单次探测最小非零丢包率为 20%。
+        // 因此，这里的 "5" 阈值实际上起到了 "Zero Tolerance" (零容忍) 的作用。
+        // 只要发现任何丢包 (loss >= 20.0)，丢包分直接拉满 (50分)。
+        // 2. 延迟维度
+        // ⚠️ 注意：300ms 是微服务调用的 "硬" 不可用线。
+        // 超过 300ms 会导致 TCP 吞吐量剧降及上层业务超时。
+        double anomalyScore = (Math.min(latency, 300) / 300.0 * 50) +
                 (Math.min(loss, 5) / 5.0 * 50);
 
-        // 2. 综合加权（仅网络维度）
-        double finalScore = netScore;
 
         log.debug("🤖 异常检测 => 集群={} | 延迟={}ms 丢包={}",
                 status.getClusterName(), latency, loss);
 
-        return Math.max(0, Math.min(100, finalScore));
+        return Math.max(0, Math.min(100, anomalyScore));
     }
 
     /**

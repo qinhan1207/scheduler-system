@@ -24,14 +24,21 @@ public class AnomalyDetectionServiceImpl implements AnomalyDetectionService {
     public void detectClusterAnomaly(ClusterStatus status) {
         String clusterName = status.getClusterName();
 
-        // 1. 计算静态异常分 (基于当前值) - 用于记录现状
-        double staticAnomalyScore = AnomalyDetectorUtil.calculateAnomalyScore(status);
-        status.setAnomalyScore(staticAnomalyScore);
+        // 1. 获取当前真实值 (LSA 上报的聚合值)
+        double currentLatency = status.getNetworkLatency();
+        double currentLoss = status.getPacketLossRate();
 
-        // 2. 🔥 核心：执行 EWMA 时序预测 (预测未来)
-        // 我们只预测两个核心网络指标，不再关注带宽和存储
+        // 2. 计算异常分 (基于当前值) - 用于记录现状
+        double anomalyScore = AnomalyDetectorUtil.calculateAnomalyScore(status);
+        status.setAnomalyScore(anomalyScore);
+
+        // 3. 🔥 核心：执行 EWMA 时序预测 (预测未来)
+        // 我们只预测两个核心网络指标
         double predictedLatency = ewmaForecaster.predict(clusterName, "latency", status.getNetworkLatency());
         double predictedLoss = ewmaForecaster.predict(clusterName, "loss", status.getPacketLossRate());
+
+        // 4.计算波动率
+
 
         // 3. 计算稳定性得分 (Stability Score) - 初始 100 分
         // 这个分数反映了“未来一小段时间内该集群保持健康的概率”
@@ -50,8 +57,8 @@ public class AnomalyDetectionServiceImpl implements AnomalyDetectionService {
             stabilityScore -= 50;
         }
 
-        // 规则 C: 结合静态异常分微调 (防止预测模型对于突发情况反应过度或不足)
-        if (staticAnomalyScore > 60) {
+        // 规则 C: 结合异常分微调 (防止预测模型对于突发情况反应过度或不足)
+        if (anomalyScore > 60) {
             stabilityScore -= 10;
         }
 

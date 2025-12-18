@@ -55,6 +55,15 @@ public class ClusterStatus {
     /** 稳定性预测得分（EWMA 预测结果） */
     private double stabilityScore;
 
+    // ========================== 🆕 新增字段 ==========================
+    /**
+     * 波动率 (Volatility / Sigma)
+     * 定义：| 当前真实值 - EWMA预测值 |
+     * 含义：反映网络的“抖动”程度。值越大，说明网络越不稳定，预测越困难。
+     * 作用：作为 StabilityScore 的扣分依据之一。
+     */
+    private double volatility;
+
     /** 集群健康状态（Healthy / Warning / Critical） */
     private String healthStatus;
 
