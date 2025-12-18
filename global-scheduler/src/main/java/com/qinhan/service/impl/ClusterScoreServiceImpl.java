@@ -47,12 +47,9 @@ public class ClusterScoreServiceImpl implements ClusterScoreService {
 
 
         // ============================================================
-        // 第一步：计算基础分 (Base Score)
-        // 策略：预测稳定性占主导 (70%)，静态资源占辅助 (30%)
+        // 第一步：获取基础网络效用 (Base Utility / S_net)
+        // 对应论文 Section 3.3 输出的 "Global Risk Score"
         // ============================================================
-        // 🔥 核心修改：融合 静态健康分(Health) 与 动态预测分(Stability)
-        double health = status.getHealthScore();       // 资源+当前网络 (0-100)
-        double stability = status.getStabilityScore(); // EWMA预测未来 (0-100)
 
         // 决策逻辑：
         // 1. 稳定性(预测)占主导：如果预测要崩，分数必须拉低
@@ -60,7 +57,7 @@ public class ClusterScoreServiceImpl implements ClusterScoreService {
 
         // 权重配置：预测稳定性 70% + 静态健康度 30%
         // 这样一旦 Stability 掉到 60 (熔断线)，总分很难超过 70，会被 Karmada 过滤掉
-        double baseScore = (stability * 0.7) + (health * 0.3);
+        double baseScore = status.getStabilityScore();
 
         // ============================================================
         // 第二步：亲和性协同修正 (Affinity Correction) - 论文核心公式
@@ -100,7 +97,7 @@ public class ClusterScoreServiceImpl implements ClusterScoreService {
 
         // 🔒 熔断逻辑：如果预测稳定性太差 (Stability < 60)，
         // 无论亲和性多好，强制限制最高分，防止调度到即将故障的节点
-        if (stability < 60) {
+        if (baseScore < 60) {
             finalScore = Math.min(finalScore, 55.0); // 强制不及格
             affinityReason += " [预测熔断]";
         }
@@ -111,8 +108,8 @@ public class ClusterScoreServiceImpl implements ClusterScoreService {
         // 构造原因描述 (方便 Karmada 日志查看)
         // 构造 Reason 字符串供 Dashboard 显示
         String reason;
-        if (stability < 60) {
-            reason = String.format("预测风险高(Stability=%.0f)%s", stability, affinityReason);
+        if (baseScore < 60) {
+            reason = String.format("预测风险高(Stability=%.0f)%s", baseScore, affinityReason);
         } else {
             reason = String.format("基础:%.0f%s", baseScore, affinityBonus > 0.5 ? affinityReason : "");
         }
@@ -124,12 +121,10 @@ public class ClusterScoreServiceImpl implements ClusterScoreService {
                 .build();
 
         // 打印详细日志用于论文实验分析
-        log.info("📊 评分 [{}] -> Target:{} | Base:{}(S:{}/H:{}) | Affinity:+{} => Final:{}",
+        log.info("⚖️ 决策层 [{}] -> 目标:{} | 基础:{}(S_net) + 亲和:{} => 最终:{}",
                 clusterName,
                 (targetCluster == null ? "无" : targetCluster),
                 String.format("%.1f", baseScore),
-                String.format("%.0f", stability),
-                String.format("%.0f", health),
                 String.format("%.1f", affinityBonus),
                 String.format("%.1f", finalScore));
 

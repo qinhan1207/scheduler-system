@@ -2,7 +2,7 @@ package com.qinhan.service.impl;
 
 import com.qinhan.model.ClusterStatus;
 import com.qinhan.model.RawNetworkStats;
-import com.qinhan.service.AnomalyDetectionService;
+import com.qinhan.service.NetworkStabilityService;
 import com.qinhan.service.MemberClusterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ public class MemberClusterServiceImpl implements MemberClusterService {
     private static final double LOSS_RATE_PENALTY_WEIGHT = 20.0;
 
     // 注入异常检测服务 (包含 EWMA 预测)
-    private final AnomalyDetectionService anomalyDetectionService;
+    private final NetworkStabilityService networkStabilityService;
 
     @Override
     public void updateClusterStatus(ClusterStatus status) {
@@ -40,9 +40,9 @@ public class MemberClusterServiceImpl implements MemberClusterService {
                 String.format("%.2f", status.getPacketLossRate()),
                 status.getPeerLatencyMap());
 
-        // 2. 🔥 核心优化：实时触发预测与异常检测，获得异常分与稳定性得分
-        // 收到数据立刻算，不要等定时任务
-        anomalyDetectionService.detectClusterAnomaly(status);
+        // 2. 🔥 核心优化：调用稳定性服务进行评估
+        // 语义非常通顺： "请帮我评估一下这个集群的稳定性"
+        networkStabilityService.evaluateStability(status);
 
 
         // 4. 更新内存缓存
