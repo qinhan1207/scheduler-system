@@ -1,5 +1,7 @@
 package com.qinhan.algorithm;
 
+import com.qinhan.model.EwmaState;
+import com.qinhan.model.ForecastResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -7,77 +9,108 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * EWMA (Exponential Weighted Moving Average) 时序预测器
- * 对应开题报告中的 "基于轻量级时序预测的主动式异常熔断算法"
- *
+ * EWMA 核心算法引擎 (SCI 增强版)
+ * 对应论文创新点：同时追踪 "趋势(Mean)" 和 "波动(Deviation)" 的双重 EWMA 模型
  */
 @Slf4j
 @Component
 public class EwmaForecaster {
 
-    // 存储每个集群、每个指标的上一次预测值 (Smoothed Value)
-    // Key: "clusterName:metricName" -> Value: double
-    private final Map<String, Double> historyMap = new ConcurrentHashMap<>();
+    // 状态容器：Key = "clusterName:metricName"
+    private final Map<String, EwmaState> stateMap = new ConcurrentHashMap<>();
 
-    // 基础平滑因子 (0 < alpha < 1)
-    // 较小的值(如0.2)使平滑更强，对噪声不敏感；较大的值(如0.8)对突变反应更快
-    // 如果 alpha 很大（接近 1）： 预测值主要由“当前真实值”决定。特点是反应快，但抗干扰差（容易被抖动误导）。
-    // 如果 alpha 很小（接近 0）： 预测值主要由“历史记忆”决定。特点是非常平稳，但反应迟钝（网络真坏了半天才反应过来）。
-    private static final double BASE_ALPHA = 0.3;
+    // 基础平滑因子 (超参数)
+    private static final double BASE_ALPHA = 0.3; // 用于均值 (Mean)
+    private static final double BETA = 0.1;       // 用于偏差 (Deviation)
 
     /**
-     * 执行预测并更新历史状态
-     *
-     * @param clusterName 集群名称
-     * @param metricName  指标名称 (e.g., "latency", "cpu")
-     * @param currentValue 当前采集到的真实值
-     * @return 预测的下一时刻值
+     * 核心预测方法
+     * @param clusterName 集群名
+     * @param metricName 指标名 (e.g., "latency")
+     * @param currentValue 当前真实值 (Observation)
+     * @return 包含均值和波动率的完整结果
      */
-    public double predict(String clusterName, String metricName, double currentValue) {
+    public ForecastResult predict(String clusterName, String metricName, double currentValue) {
         String key = clusterName + ":" + metricName;
-        Double lastForecast = historyMap.get(key);
 
-        // 1. 如果是第一次数据，无法预测，直接初始化
-        if (lastForecast == null) {
-            historyMap.put(key, currentValue);
-            return currentValue;
+        // 1. 获取或创建该集群的专属状态 (原子操作)
+        EwmaState state = stateMap.computeIfAbsent(key, k -> new EwmaState());
+
+        // 2. 冷启动初始化逻辑
+        if (!state.isInitialized()) {
+            state.setMean(currentValue);
+            state.setDeviation(0.0);
+            state.setInitialized(true);
+            // 返回初始结果
+            return ForecastResult.builder()
+                    .predMean(currentValue)
+                    .predDeviation(0.0)
+                    .volatility(0.0)
+                    .build();
         }
 
-        // 2. 计算预测误差 (Error)
-        double error = Math.abs(currentValue - lastForecast);
+        // 3. 计算当前误差 (Error)
+        double lastMean = state.getMean();
+        double error = Math.abs(currentValue - lastMean);
 
-        // 3. 自适应 Alpha 调节机制 (论文创新点)
-        // 如果误差很大，说明网络发生了突变，我们需要增大 Alpha，让模型快速“跟上”新趋势
-        // 如果误差很小，说明网络平稳，减小 Alpha，过滤噪声
-        double adaptiveAlpha = calculateAdaptiveAlpha(error, lastForecast);
+        // 4. 自适应 Alpha 计算 (Adaptive Weighting)
+        double adaptiveAlpha = calculateAdaptiveAlpha(error, lastMean);
 
-        // 4. EWMA 公式: St = α * Yt + (1 - α) * St-1
-        // newForecast = alpha * current + (1 - alpha) * last
-        double newForecast = adaptiveAlpha * currentValue + (1 - adaptiveAlpha) * lastForecast;
+        // ============================================================
+        // 5. 双重 EWMA 更新 (Dual-EWMA Update)
+        // ============================================================
 
-        // 更新历史
-        historyMap.put(key, newForecast);
+        // A. 更新偏差 (Deviation Update): σ_t = β * |Error| + (1 - β) * σ_t-1
+        double newDeviation = BETA * error + (1 - BETA) * state.getDeviation();
 
-        log.debug("🔮 EWMA预测 [{}] {} -> 真实值:{} | 预测值:{} | 误差:{} | Alpha:{}",
-                clusterName, metricName,
-                String.format("%.2f", currentValue),
-                String.format("%.2f", newForecast),
-                String.format("%.2f", error),
-                String.format("%.2f", adaptiveAlpha));
+        // B. 更新均值 (Mean Update): μ_t = α * Y_t + (1 - α) * μ_t-1
+        double newMean = adaptiveAlpha * currentValue + (1 - adaptiveAlpha) * lastMean;
 
-        return newForecast;
+        // 6. 更新内部记忆状态
+        state.setMean(newMean);
+        state.setDeviation(newDeviation);
+
+        // 7. 计算相对波动率 (Relative Volatility)
+        // 防止除以 0 异常
+        double volatility = (newMean > 0.0001) ? (newDeviation / newMean) : 0.0;
+
+        // 打印算法层日志 (用于论文数据分析)
+        // 先定义好单位，避免在 log 里写三元表达式，太乱
+        String unit = metricName.equals("latency") ? "ms" : "% ";
+
+        // 执行日志打印
+        log.info("🔮 [算法] [{}] [{}] 真实:{}{} -> 预测:{}{} (±{}) | 波动:{}% | α:{}",
+                clusterName,
+                metricName,
+                // 1. 真实值 ( %6.2f 表示总宽6位，小数点后2位，自动右对齐 )
+                String.format("%6.2f", currentValue),
+                unit,
+                // 2. 预测值
+                String.format("%6.2f", newMean),
+                unit,
+                // 3. 偏差 (保留2位)
+                String.format("%.2f", newDeviation),
+                // 4. 波动率 (转成百分比字符串)
+                String.format("%.1f", volatility * 100),
+                // 5. Alpha (保留2位)
+                String.format("%.2f", adaptiveAlpha)
+        );
+
+        // 8. 返回结果对象
+        return ForecastResult.builder()
+                .predMean(newMean)
+                .predDeviation(newDeviation)
+                .volatility(volatility)
+                .build();
     }
 
     /**
-     * 根据误差动态计算 Alpha
+     * 自适应 Alpha 计算
+     * 逻辑：误差越大，Alpha 越大（响应越快）；误差越小，Alpha 越小（抗噪越强）。
      */
     private double calculateAdaptiveAlpha(double error, double lastValue) {
-        // 相对误差率
-        double errorRatio = (lastValue == 0) ? 0 : error / Math.abs(lastValue);
-
-        // 简单的自适应策略：
-        // 基础 alpha = 0.3
-        // 加上误差率带来的增益，最大限制在 0.8，最小 0.1
+        double errorRatio = (Math.abs(lastValue) < 0.0001) ? 0 : error / Math.abs(lastValue);
+        // 基础 0.3 + 误差增益，限制在 [0.1, 0.8] 区间
         double alpha = BASE_ALPHA + (errorRatio * 0.5);
         return Math.max(0.1, Math.min(0.8, alpha));
     }

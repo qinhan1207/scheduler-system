@@ -2,6 +2,7 @@ package com.qinhan.service.impl;
 
 import com.qinhan.algorithm.EwmaForecaster;
 import com.qinhan.model.ClusterStatus;
+import com.qinhan.model.ForecastResult;
 import com.qinhan.service.NetworkStabilityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,20 +26,19 @@ public class NetworkStabilityServiceImpl implements NetworkStabilityService {
         double currentLatency = status.getNetworkLatency();
         double currentLoss = status.getPacketLossRate();
 
-        // 1. 获取预测值 (v_hat, l_hat)
-        double predictedLatency = ewmaForecaster.predict(clusterName, "latency", currentLatency);
-        double predictedLoss = ewmaForecaster.predict(clusterName, "loss", currentLoss);
+        // 1. 获取完整的预测结果对象 (ForecastResult)
+        // 这里面已经包含了经过 EWMA 平滑处理过的 mean 和 volatility
+        ForecastResult latencyResult = ewmaForecaster.predict(clusterName, "latency", currentLatency);
+        ForecastResult lossResult = ewmaForecaster.predict(clusterName, "loss", currentLoss);
 
-        // =============================================================
-        // 关键修正：严格按照论文 3.3.3 计算 "相对波动率" (Relative Volatility)
-        // =============================================================
+        // 2. 提取预测均值 (PredMean) -> 用于计算基础风险分
+        double predictedLatency = latencyResult.getPredMean();
+        double predictedLoss = lossResult.getPredMean();
 
-        // 公式: sigma = |actual - predicted| / (predicted + epsilon)
-        double absError = Math.abs(currentLatency - predictedLatency);
+        // 3. 提取相对波动率 (Volatility) -> 论文核心指标！
+        // 我们主要关注延迟的波动 (Jitter)，丢包的波动通常不太重要
+        double relativeVolatility = latencyResult.getVolatility();
 
-        // epsilon 取 1.0 防止分母为 0 (对于延迟来说 1ms 的 epsilon 很合理)
-        // 结果含义：0.1 表示波动 10%，0.5 表示波动 50%
-        double relativeVolatility = absError / (predictedLatency + 1.0);
 
         // 将这个相对值存入 status (无量纲，例如 0.25)
         status.setVolatility(relativeVolatility);
@@ -76,14 +76,14 @@ public class NetworkStabilityServiceImpl implements NetworkStabilityService {
         // 例子: 如果当前波动是 15% (0.15)，基准是 30% (0.3)，那么风险就是 0.5
         double r_volatility = relativeVolatility / REF_SIGMA;
 
-        // 4. 异常阻断惩罚 (Circuit Breaker)
-        double penalty = 0.0;
         // 增加一个保护：如果延迟极低(如10ms)，波动100%(变成20ms)其实无所谓。
         // 所以只有当 predictedLatency > 30ms 时才计入波动风险，防止低延迟下的过度敏感。
         if (predictedLatency < 30.0) {
             r_volatility = 0.0;
         }
 
+        // 4. 异常阻断惩罚 (Circuit Breaker)
+        double penalty = 0.0;
         // 熔断条件
         if (predictedLoss > 5.0 || predictedLatency > 300.0) {
             penalty = 10.0;
@@ -110,12 +110,16 @@ public class NetworkStabilityServiceImpl implements NetworkStabilityService {
         status.setStabilityScore(score);
 
         // 日志中打印相对波动率 (百分比形式，方便观察)
-//        String remark = String.format("Risk=%.2f (L:%.1f, P:%.1f, Vol:%.0f%%) -> Score=%.1f",
-//                totalRisk, r_latency, r_loss, (relativeVolatility * 100), score);
+
         String remark = String.format("总风险=%.2f (延险:%.1f, 丢险:%.1f, 波动:%.0f%%) -> 评分=%.1f",
                 totalRisk, r_latency, r_loss, (relativeVolatility * 100), score);
         status.setRemark(remark);
 
-        log.info("🧮 论文模型评分 [{}] : {}", clusterName, remark);
+        log.info("🧮 [决策] [{}] 原始延迟:{}ms | 预测延迟:{}ms | 波动率:{}% | {}",
+                clusterName,
+                String.format("%.2f", currentLatency),
+                String.format("%.2f", predictedLatency),
+                String.format("%.0f", relativeVolatility * 100),
+                remark);
     }
 }
