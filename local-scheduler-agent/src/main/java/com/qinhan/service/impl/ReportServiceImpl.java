@@ -23,10 +23,10 @@ public class ReportServiceImpl implements ReportService {
 
     /**
      * 定时采集并上报
-     * 频率: 每 10 秒一次
+     * 频率: 每 1 秒一次
      */
     @Override
-    @Scheduled(fixedRate = 10000)
+    @Scheduled(fixedRateString = "${report.interval:1000}")    //修改上报数据间隔，采集数据
     public void reportAllClusters() {
         String mode = lsaProperties.getMode();
 

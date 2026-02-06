@@ -29,4 +29,9 @@ public class ForecastResult {
      * 作用：SCI 论文核心指标，用于量化网络风险并触发熔断。
      */
     private double volatility;
+
+    /**
+     * LSTM 预测出的故障概率 (0.0 ~ 1.0)
+     */
+    private double riskProbability;
 }

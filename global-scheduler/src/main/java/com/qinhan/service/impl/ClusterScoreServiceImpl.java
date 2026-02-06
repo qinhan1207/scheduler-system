@@ -9,14 +9,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * ClusterScoreServiceImpl
  * 核心评分引擎：融合了以下三层逻辑
  * 1. 静态健康度 (Health): 资源是否充足
  * 2. 动态稳定性 (Stability): EWMA 预测网络是否即将拥塞
- * 3. 亲和性修正 (Affinity): 与目标微服务的物理距离
  */
 @Slf4j
 @Service
@@ -28,69 +26,60 @@ public class ClusterScoreServiceImpl implements ClusterScoreService {
     @Override
     public ClusterScore calculateScore(String clusterName, String targetCluster) {
 
+        String realName = clusterName;
+        if (clusterName.startsWith("cluster")) {
+            realName = clusterName.replace("cluster", "member");
+            // 打印一条调试日志，证明补丁生效了
+            log.debug("🔄 [NameMapping] 将请求 [{}] 映射为本地名称 [{}] 进行查询", clusterName, realName);
+        }
+
+        // 为了在 Lambda 表达式中使用，需要确保变量是 effective final
+        String searchName = realName;
+
         // 1.获取集群状态
         List<ClusterStatus> allStatus = memberClusterService.getAllClusterStatus();
 
         ClusterStatus status = allStatus.stream()
-                .filter(s -> clusterName.equals(s.getClusterName()))
+                .filter(s -> searchName.equals(s.getClusterName()))
                 .findFirst()
                 .orElse(null);
 
         if (status == null) {
-            log.warn("⚠️ 未找到集群 [{}] 的状态记录，无法计算评分。", clusterName);
+            // 注意：这里打印日志还是用原始的 clusterName，方便和 Karmada 日志对应
+            log.warn("⚠️ 未找到集群 [{}] (映射为: {}) 的状态记录，无法计算评分。", clusterName, searchName);
             return ClusterScore.builder()
-                    .clusterName(clusterName)
+                    .clusterName(clusterName) // 返回给插件时，必须用它认识的原始名字
                     .healthScore(0)
                     .reason("未找到集群状态数据")
                     .build();
         }
 
 
-        // ============================================================
-        // 第一步：获取基础网络效用 (Base Utility / S_net)
-        // 对应论文 Section 3.3 输出的 "Global Risk Score"
-        // ============================================================
-
-        // 决策逻辑：
-        // 1. 稳定性(预测)占主导：如果预测要崩，分数必须拉低
-        // 2. 健康度(现状)作辅助：如果预测没问题，再看资源够不够
-
-        // 权重配置：预测稳定性 70% + 静态健康度 30%
-        // 这样一旦 Stability 掉到 60 (熔断线)，总分很难超过 70，会被 Karmada 过滤掉
+        // 我们已经在 NetworkStabilityServiceImpl 里运用了复杂的公式 (LSTM + Alpha)
+        // 计算出了最终得分 (0-100)。这里绝对不要再做任何"截断"或"修改"。
+        // 让 Go 插件看到的，就是算法算出来的原值。
         double finalScore = status.getStabilityScore();
-        String reason = "";
 
-        // ============================================================
-        // 第三步：融合与熔断 (Fusion & Circuit Breaking)
-        // ============================================================
-
-        // 🔒 熔断逻辑：如果预测稳定性太差 (Stability < 60)，
-        // 无论亲和性多好，强制限制最高分，防止调度到即将故障的节点
-        if (finalScore < 60.0) {
-            finalScore = Math.min(finalScore, 55.0);
-            reason = String.format("网络高风险(Score=%.1f) [熔断生效]", status.getStabilityScore());
-        } else {
-            reason = String.format("网络健康(Score=%.1f)", finalScore);
+        // 2. 构造 Reason 字符串 (仅用于显示，不影响调度)
+        String reason = status.getRemark(); // 直接复用上一层生成的详细备注
+        if (reason == null || reason.isEmpty()) {
+            reason = String.format("Score:%.2f", finalScore);
         }
 
-        // 封顶 100 分
-        finalScore = Math.max(0, Math.min(100, finalScore));
 
-        // 构造原因描述 (方便 Karmada 日志查看)
-        // 构造 Reason 字符串供 Dashboard 显示
+        // 3. 构造结果
         ClusterScore result = ClusterScore.builder()
                 .clusterName(clusterName)
                 .healthScore(finalScore)
                 .reason(reason)
                 .build();
 
-        // 打印详细日志用于论文实验分析
-        // 打印纯净的实验日志 (方便论文截图和数据分析)
-        // 格式：[SCI实验] 决策层 [MemberX] -> S_net:85.0 => Final:85.0
-        log.info("🧪 [SCI实验] 决策层 [{}] -> S_net:{} => Final:{}",
+        // 4. 打印最终决策日志 (这是您论文数据的最终出口)
+        // 格式: [FINAL-DECISION] 集群 -> 分数
+        log.info("🏁 [最终输出] To-Go-Plugin: Cluster=[{}] | FinalScore={} | Reason=[{}]",
                 clusterName,
-                String.format("%.1f", status.getStabilityScore()),
-                String.format("%.1f", finalScore));
+                String.format("%.2f", finalScore),
+                reason);
 
         return result;
     }

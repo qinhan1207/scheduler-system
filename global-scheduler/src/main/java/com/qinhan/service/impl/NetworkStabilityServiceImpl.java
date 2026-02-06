@@ -3,9 +3,11 @@ package com.qinhan.service.impl;
 import com.qinhan.algorithm.EwmaForecaster;
 import com.qinhan.model.ClusterStatus;
 import com.qinhan.model.ForecastResult;
+import com.qinhan.service.NaiveStabilityComparisonService;
 import com.qinhan.service.NetworkStabilityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -15,6 +17,14 @@ public class NetworkStabilityServiceImpl implements NetworkStabilityService {
 
     private final EwmaForecaster ewmaForecaster;
 
+    // 1. 注入刚刚写的影子服务
+    private final NaiveStabilityComparisonService naiveService;
+
+    @Value("${experiment.mode:proposed}")
+    private String mode;
+
+    @Value("${experiment.risk-alpha:0.5}")
+    private double riskAlpha;
 
     @Override
     public void evaluateStability(ClusterStatus status) {
@@ -24,102 +34,106 @@ public class NetworkStabilityServiceImpl implements NetworkStabilityService {
         // 第一步：数据准备 & EWMA 预测
         // =============================================================
         double currentLatency = status.getNetworkLatency();
-        double currentLoss = status.getPacketLossRate();
+//        double currentLoss = status.getPacketLossRate();
 
-        // 1. 获取完整的预测结果对象 (ForecastResult)
+        // 1. 调用EWMA和LSTM获取完整的预测结果对象 (ForecastResult)
         // 这里面已经包含了经过 EWMA 平滑处理过的 mean 和 volatility
         ForecastResult latencyResult = ewmaForecaster.predict(clusterName, "latency", currentLatency);
-        ForecastResult lossResult = ewmaForecaster.predict(clusterName, "loss", currentLoss);
 
-        // 2. 提取预测均值 (PredMean) -> 用于计算基础风险分
-        double predictedLatency = latencyResult.getPredMean();
-        double predictedLoss = lossResult.getPredMean();
-
-        // 3. 提取相对波动率 (Volatility) -> 论文核心指标！
-        // 我们主要关注延迟的波动 (Jitter)，丢包的波动通常不太重要
-        double relativeVolatility = latencyResult.getVolatility();
+        // 2. 提取实验需要的核心指标 EWMA预测均值 (PredMean)
+        double predLatency = latencyResult.getPredMean();  // 预测延迟
+        double riskProb = latencyResult.getRiskProbability();   // LSTM风险概率
+        double volatility = latencyResult.getVolatility();      // 预测波动
 
 
         // 将这个相对值存入 status (无量纲，例如 0.25)
-        status.setVolatility(relativeVolatility);
+        status.setVolatility(volatility);
 
         // =============================================================
-        // 第二步：参数配置 (对应论文 Section 3.3.5)
+        // 🔥🔥 第二步：计算归一化成本 (Cost Model) 🔥🔥
+        // 中间变量 Cost：范围 0.0 ~ 1.0，越低越好
         // =============================================================
 
-        // A. 基准值 (Reference Values) - 用于归一化
-        final double REF_LATENCY = 150.0; // 延迟基准: 150ms
-        final double REF_LOSS = 2.0;      // 丢包基准: 2%
+        // 1. 定义归一化基准
+        // 假设 300ms 以上延迟不仅不可接受，而且会导致 Cost=1.0 (最差)
+        final double MAX_LATENCY_NORM = 300.0;
 
-        // 🔥 修正：这里不再是 20ms，而是 "波动率基准比例"
-        // 含义：我们容忍多少比例的抖动？
-        // 设为 0.3 (即 30%)。如果相对波动率 > 30%，说明网络极不稳定。
-        final double REF_SIGMA = 0.3;
+        // 2. 准备归一化数据
+        double normCurrent = Math.min(1.0, currentLatency / MAX_LATENCY_NORM);
+        double normPredicted = Math.min(1.0, predLatency / MAX_LATENCY_NORM);
 
-        // B. 权重向量 (Weight Vector)
-        final double W_LATENCY = 1.0;
-        final double W_LOSS = 2.0;
-        final double W_VOLATILITY = 0.5;  // 波动率权重
+        double cost = 0.0;
+        String strategyLog = "";
 
-        // =============================================================
-        // 第三步：计算归一化风险 (Normalized Risk)
-        // =============================================================
+        // --- 分支 A: Baseline-A (Native) ---
+        if ("native".equalsIgnoreCase(mode)) {
+            // Native 模式下，假设网络成本为 0 (盲目乐观)，
+            // 这样算出来的分数为 100，完全由 CPU/内存 决定调度
+            cost = 0.0;
+            strategyLog = "Native(Blind)";
+        }
+        // --- 分支 B: Baseline-B (Reactive) ---
+        else if ("reactive".equalsIgnoreCase(mode)) {
+            // 成本 = 当前延迟
+            cost = normCurrent;
+            strategyLog = "Reactive(Current)";
+        }
+        // --- 分支 C: Variant (Prediction Only) ---
+        else if ("prediction".equalsIgnoreCase(mode)) {
+            // 成本 = 预测延迟 (不看风险)
+            cost = normPredicted;
+            strategyLog = "Prediction(NoRisk)";
+        }
+        // --- 分支 D: Proposed (RCGS 完整版) ---
+        else {
+            // 成本 = (1-α)*L + α*Psi
+            // 这里的 riskProb 直接作为风险项 (0.0~1.0)
 
-        // 1. 延迟风险 (Linear)
-        double r_latency = predictedLatency / REF_LATENCY;
+            // 【技巧】：为了防止 alpha=0.5 时，对高风险(Prob=0.9)的惩罚力度不够大
+            // 我们可以稍微做一个"风险放大"，确保高风险节点的 Cost 接近 1.0
+            double effectiveRisk = riskProb;
+            if (riskProb > 0.6) {
+                effectiveRisk = 1.0; // 熔断机制：只要风险高，直接认为风险项拉满
+            }
 
-        // 2. 丢包风险 (Linear)
-        double r_loss = predictedLoss / REF_LOSS;
+            cost = (1 - riskAlpha) * normPredicted + (riskAlpha * effectiveRisk);
 
-        // 3. 波动风险 (Risk of Sigma)
-        // 公式: r_sigma = sigma_relative / sigma_ref
-        // 例子: 如果当前波动是 15% (0.15)，基准是 30% (0.3)，那么风险就是 0.5
-        double r_volatility = relativeVolatility / REF_SIGMA;
+            // 确保 Cost 不超过 1.0
+            cost = Math.min(1.0, cost);
 
-        // 增加一个保护：如果延迟极低(如10ms)，波动100%(变成20ms)其实无所谓。
-        // 所以只有当 predictedLatency > 30ms 时才计入波动风险，防止低延迟下的过度敏感。
-        if (predictedLatency < 30.0) {
-            r_volatility = 0.0;
+            strategyLog = String.format("RCGS(α=%.1f)", riskAlpha);
         }
 
-        // 4. 异常阻断惩罚 (Circuit Breaker)
-        double penalty = 0.0;
-        // 熔断条件
-        if (predictedLoss > 5.0 || predictedLatency > 300.0) {
-            penalty = 10.0;
-        }
-
-        // 5. 总风险求和
-        double totalRisk = (W_LATENCY * r_latency) +
-                (W_LOSS * r_loss) +
-                (W_VOLATILITY * r_volatility) +
-                penalty;
-
         // =============================================================
-        // 第四步：非线性映射 (Exponential Mapping)
+        // 🔥🔥 第三步：转换为 0-100 得分 (Higher is Better) 🔥🔥
+        // 公式：Score = (1 - Cost) * 100
         // =============================================================
 
-        // Lambda 系数
-        final double LAMBDA = 0.6;
-        double score = 100.0 * Math.exp(-LAMBDA * totalRisk);
-        score = Math.max(0, Math.min(100, score));
+        double finalScore = (1.0 - cost) * 100.0;
+
+        // 确保分数在 0~100 之间
+        finalScore = Math.max(0.0, Math.min(100.0, finalScore));
 
         // =============================================================
-        // 第五步：保存与日志
+        // 第四步：保存与日志
         // =============================================================
-        status.setStabilityScore(score);
 
-        // 日志中打印相对波动率 (百分比形式，方便观察)
-
-        String remark = String.format("总风险=%.2f (延险:%.1f, 丢险:%.1f, 波动:%.0f%%) -> 评分=%.1f",
-                totalRisk, r_latency, r_loss, (relativeVolatility * 100), score);
+        // 存入 status (Go 插件读到的是这个 0-100 的数)
+        status.setStabilityScore(finalScore);
+        String remark = String.format("[%s] Lat:%.0f->%.0f | Risk:%.2f | Cost:%.2f -> Score:%.1f",
+                strategyLog, currentLatency, predLatency, riskProb, cost, finalScore);
         status.setRemark(remark);
-
-        log.info("🧮 [决策] [{}] 原始延迟:{}ms | 预测延迟:{}ms | 波动率:{}% | {}",
-                clusterName,
+        // 打印 EXP-DATA
+        // 注意：这里打印 finalScore，画图时记得：Proposed 曲线应该在高处(100)，掉下来代表性能变差
+        log.info("EXP-DATA,{},{},{},{},{},{}",
+                mode, clusterName, System.currentTimeMillis(),
                 String.format("%.2f", currentLatency),
-                String.format("%.2f", predictedLatency),
-                String.format("%.0f", relativeVolatility * 100),
-                remark);
+                String.format("%.2f", riskProb),
+                String.format("%.2f", finalScore));
+
+
+        naiveService.logComparison(status);
+
+
     }
 }

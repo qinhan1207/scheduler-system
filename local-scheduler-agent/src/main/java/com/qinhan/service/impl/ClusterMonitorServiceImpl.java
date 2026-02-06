@@ -67,9 +67,9 @@ public class ClusterMonitorServiceImpl implements ClusterMonitorService {
 
     private Map<String, String> getNeighborIps() {
         Map<String, String> neighbors = new HashMap<>();
-        neighbors.put("member1", "member1-control-plane");
-        neighbors.put("member2", "member2-control-plane");
-        neighbors.put("member3", "member3-control-plane");
+        neighbors.put("member1", "10.11.17.231");
+        neighbors.put("member2", "10.11.17.232");
+        neighbors.put("member3", "10.11.17.233");
 
         String myName = lsaProperties.getCurrentClusterName(); // 确保你注入了 LsaProperties
         if (myName != null && neighbors.containsKey(myName)) {

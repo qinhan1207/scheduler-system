@@ -2,6 +2,8 @@ package com.qinhan.algorithm;
 
 import com.qinhan.model.EwmaState;
 import com.qinhan.model.ForecastResult;
+import com.qinhan.model.PredictionResult;
+import com.qinhan.util.LSTMPredictor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -25,8 +27,9 @@ public class EwmaForecaster {
 
     /**
      * 核心预测方法
-     * @param clusterName 集群名
-     * @param metricName 指标名 (e.g., "latency")
+     *
+     * @param clusterName  集群名
+     * @param metricName   指标名 (e.g., "latency")
      * @param currentValue 当前真实值 (Observation)
      * @return 包含均值和波动率的完整结果
      */
@@ -96,11 +99,41 @@ public class EwmaForecaster {
                 String.format("%.2f", adaptiveAlpha)
         );
 
+        // 🔍【新增】记录即将调用LSTM预测的集群信息
+        log.info("🚀 [LSTM调用] 集群=[{}] 指标=[{}] 准备调用LSTM模型进行故障预测...", clusterName, metricName);
+        
+        // 调用LSTM并获取概率
+        PredictionResult lstmResult = LSTMPredictor.predict(newMean, newDeviation, volatility);
+        double probability = lstmResult.getProbability();
+        
+        // 📊【优化】统一格式化LSTM预测结果日志，包含集群标识
+        log.info("🧠 [LSTM结果] 集群=[{}] 指标=[{}] | 是否故障={} | 故障概率={}% | 信息=[{}]",
+                clusterName,
+                metricName,
+                lstmResult.isFault() ? "是" : "否",
+                String.format("%.2f", probability * 100),
+                lstmResult.getMessage()
+        );
+
+
+        // === 🔥🔥🔥 新增：直接落盘到 CSV 🔥🔥🔥 ===
+        // 这一行代码，直接把特征导出，供 LSTM 训练使用
+//        TrainingDataCollector.record(
+//                clusterName,
+//                metricName,
+//                currentValue,   // Raw Latency
+//                newMean,        // Mu
+//                newDeviation,   // Sigma
+//                volatility,     // V
+//                adaptiveAlpha   // Alpha (留着分析用)
+//        );
+
         // 8. 返回结果对象
         return ForecastResult.builder()
                 .predMean(newMean)
                 .predDeviation(newDeviation)
                 .volatility(volatility)
+                .riskProbability(probability)
                 .build();
     }
 

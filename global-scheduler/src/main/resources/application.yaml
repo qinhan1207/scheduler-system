@@ -4,4 +4,18 @@ spring:
 karmada:
   kubeconfig: E:\karmada-config
 server:
-  port: 8088
+  port: 9090
+# ==========================================
+# 🔥 实验控制面板 (Experiment Control Panel)
+# ==========================================
+experiment:
+  # 当前实验模式
+  # 可选值:
+  #   reactive   -> 对应 Baseline-B (仅使用观测值)
+  #   prediction -> 对应 Variant (仅预测，无风险惩罚)
+  #   proposed   -> 对应 Proposed (RCGS 完整版)
+  mode: proposed
+
+  # 风险惩罚系数 (对应论文公式中的 α)
+  # 范围: 0.0 ~ 1.0 (仅在 mode: proposed 下生效)
+  risk-alpha: 0.5
