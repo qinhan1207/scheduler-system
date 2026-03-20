@@ -101,11 +101,11 @@ public class EwmaForecaster {
 
         // 🔍【新增】记录即将调用LSTM预测的集群信息
         log.info("🚀 [LSTM调用] 集群=[{}] 指标=[{}] 准备调用LSTM模型进行故障预测...", clusterName, metricName);
-        
+
         // 调用LSTM并获取概率
-        PredictionResult lstmResult = LSTMPredictor.predict(newMean, newDeviation, volatility);
+        PredictionResult lstmResult = LSTMPredictor.predict(clusterName, newMean, newDeviation, volatility);
         double probability = lstmResult.getProbability();
-        
+
         // 📊【优化】统一格式化LSTM预测结果日志，包含集群标识
         log.info("🧠 [LSTM结果] 集群=[{}] 指标=[{}] | 是否故障={} | 故障概率={}% | 信息=[{}]",
                 clusterName,

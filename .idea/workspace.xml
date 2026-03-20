@@ -4,20 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="refactor(scheduler): 优化稳定性预测与评分逻辑&#10;&#10;- 引入双重EWMA模型，分别计算趋势和波动，提升预测准确性&#10;- 使用EwmaState存储预测均值和偏差，实现冷启动和状态维护&#10;- 提供完整预测结果ForecastResult，包含均值、偏差和相对波动率&#10;- NetworkStabilityService整合预测结果，计算更合理的风险与稳定性评分&#10;- 调整熔断判定条件，强化异常检测的灵敏度与准确度&#10;- 移除旧异常检测任务和工具，简化代码并提升系统性能&#10;- 优化日志输出格式，方便论文数据分析与调试追踪&#10;- 引入健康链路过滤策略，改进网络指标聚合算法，提高评分合理性">
-      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/NaiveStabilityComparisonService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/LSTMPredictor.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/TrainingDataCollector.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/PredictionResult.java" afterDir="false" />
+    <list default="true" id="04f81800-6c05-4fd2-8690-14dbdb2c2511" name="Changes" comment="```&#10;feat(global-scheduler): 添加实验控制面板配置和LSTM风险预测功能&#10;&#10;添加实验模式控制配置，支持reactive、prediction和proposed三种模式，&#10;集成LSTM预测器进行网络故障概率计算，并实现不同策略的风险评分算法&#10;&#10;BREAKING CHANGE: 更改了应用端口从808到9090&#10;&#10;perf(local-scheduler-agent): 优化集群邻居IP配置和数据上报频率&#10;&#10;将邻居集群IP从域名改为实际IP地址，提高网络连接可靠性，&#10;并将数据上报频率从每10秒调整为每1秒，增强实时性&#10;&#10;fix(global-scheduler): 修复集群名称映射和网络聚合策略&#10;&#10;解决Karmada集群名称与本地名称不匹配的问题，实现cluster到member的&#10;自动映射，同时优化网络延迟聚合算法，采用最小值策略替代平均值&#10;&#10;refactor(global-scheduler): 重构网络稳定性评估服务&#10;&#10;移除复杂的多维度风险计算，简化为基于LSTM风险概率的统一评分模型，&#10;支持多种实验模式对比，包括基线版本和提出的RCGS完整版算法&#10;```">
+      <change afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/RawLSTMStabilityService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/ExperimentDataLogger.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/RawLSTMPredictor.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/algorithm/EwmaForecaster.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/algorithm/EwmaForecaster.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/ClusterScoreServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/ClusterScoreServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/MemberClusterServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/MemberClusterServiceImpl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/NetworkStabilityServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/java/com/qinhan/service/impl/NetworkStabilityServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/global-scheduler/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/global-scheduler/src/main/resources/application.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ClusterMonitorServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ClusterMonitorServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ReportServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/local-scheduler-agent/src/main/java/com/qinhan/service/impl/ReportServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/ForecastResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-pojo/src/main/java/com/qinhan/model/ForecastResult.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/LSTMPredictor.java" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler-common/src/main/java/com/qinhan/util/LSTMPredictor.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,8 +22,8 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Interface" />
-        <option value="Class" />
         <option value="Dockerfile" />
+        <option value="Class" />
       </list>
     </option>
   </component>
@@ -363,7 +357,12 @@
       <workItem from="1770348188846" duration="3421000" />
       <workItem from="1770354468176" duration="149000" />
       <workItem from="1770355297236" duration="3668000" />
-      <workItem from="1770370248499" duration="2596000" />
+      <workItem from="1770370248499" duration="10472000" />
+      <workItem from="1770880449350" duration="2514000" />
+      <workItem from="1772522448850" duration="17000" />
+      <workItem from="1773814743734" duration="4015000" />
+      <workItem from="1773899379077" duration="2373000" />
+      <workItem from="1773994461369" duration="323000" />
     </task>
     <task id="LOCAL-00001" summary="feat(scheduler): 初始化项目结构和基础功能&#10;&#10;- 添加 .gitignore 文件，配置 Maven、IDE 等忽略规则&#10;- 创建全局调度器 global-scheduler 和本地代理 local-scheduler-agent 模块- 配置 Spring Boot项目结构和依赖管理&#10;- 实现集群状态上报与查询接口&#10;- 实现定时上报集群数据到全局调度器- 添加 ClusterStatus 数据模型和相关服务接口&#10;- 配置应用名称和端口等基本属性&#10;- 添加 Lombok 支持简化代码编写&#10;- 集成 RestTemplate 实现 HTTP 客户端工具类&#10;- 添加基础的单元测试框架支持&#10;- 配置 IDEA 编码和项目结构信息&#10;- 初始化 Maven 多模块项目结构">
       <option name="closed" value="true" />
@@ -597,7 +596,15 @@
       <option name="project" value="LOCAL" />
       <updated>1766121519877</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="```&#10;feat(global-scheduler): 添加实验控制面板配置和LSTM风险预测功能&#10;&#10;添加实验模式控制配置，支持reactive、prediction和proposed三种模式，&#10;集成LSTM预测器进行网络故障概率计算，并实现不同策略的风险评分算法&#10;&#10;BREAKING CHANGE: 更改了应用端口从808到9090&#10;&#10;perf(local-scheduler-agent): 优化集群邻居IP配置和数据上报频率&#10;&#10;将邻居集群IP从域名改为实际IP地址，提高网络连接可靠性，&#10;并将数据上报频率从每10秒调整为每1秒，增强实时性&#10;&#10;fix(global-scheduler): 修复集群名称映射和网络聚合策略&#10;&#10;解决Karmada集群名称与本地名称不匹配的问题，实现cluster到member的&#10;自动映射，同时优化网络延迟聚合算法，采用最小值策略替代平均值&#10;&#10;refactor(global-scheduler): 重构网络稳定性评估服务&#10;&#10;移除复杂的多维度风险计算，简化为基于LSTM风险概率的统一评分模型，&#10;支持多种实验模式对比，包括基线版本和提出的RCGS完整版算法&#10;```">
+      <option name="closed" value="true" />
+      <created>1770373017593</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1770373017593</updated>
+    </task>
+    <option name="localTasksCounter" value="31" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -627,7 +634,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(bridge):重构 Bridge 服务实现并增强 Work 监听功能&#10;&#10;- 将 BridgeServiceImpl重构为基于 kubectl 命令行的监听机制&#10;- 新增 BridgeServiceImpl2 使用原生 Kubernetes Java Client 监听 Work 对象&#10;- 扩展 BridgeService 接口，添加启动、停止、状态查询等管理方法&#10;- 增强 K8sClientUtil 支持跳过 SSL 证书验证和自定义超时配置&#10;- 升级 Kubernetes Java Client 版本至 22.0 并引入扩展包&#10;- 实现健康检查、活动日志记录和手动触发调度功能&#10;- 添加 Work 缓存管理和统计信息接口- 改进异常处理和连接重试机制，提高服务稳定性" />
     <MESSAGE value="feat(bridge): 实现ResourceBinding监听功能&#10;&#10;- 修改配置文件路径前缀为bridge.kubeconfig.path&#10;- 在BridgeApplication中实现CommandLineRunner接口以启动监听&#10;- 更新BridgeService接口方法，专注ResourceBinding监听- 重构BridgeServiceImpl实现ResourceBinding事件监听逻辑&#10;- 注释掉BridgeServiceImpl2的旧实现代码- 添加K8sClientUtil和CustomObjectsApi依赖引入&#10;- 实现createWatch方法用于创建ResourceBinding监听&#10;- 添加handleResourceBindingEvent处理具体事件逻辑&#10;- 引入SchedulingEvent模型用于事件封装&#10;- 添加sendToGlobalScheduler方法用于发送事件给调度器- 实现testConnection方法用于测试Karmada连接状态- 移除旧的Work对象相关监听和调度逻辑&#10;- 更新日志记录方式，增强事件处理可追踪性- 优化watch循环逻辑，增加重试机制和异常处理&#10;- 调整属性注入字段名称和配置引用方式- 删除无关注解和旧有健康检查、手动调度等功能&#10;- 简化监听器启停逻辑，移除定时任务执行器-优化事件解析逻辑，支持ADDED/MODIFIED/DELETED类型&#10;- 增加对ResourceBinding状态和集群信息的提取&#10;- 补充ApiException捕获和更详细的错误日志记录" />
     <MESSAGE value="feat(bridge): 实现ResourceBinding事件监听与上报功能&#10;&#10;- 移除BridgeApplication中的CommandLineRunner实现&#10;- 新增GlobalSchedulerClient用于向全局调度器发送事件&#10;- 创建TestController提供测试事件发送接口&#10;- 在BridgeServiceImpl中集成事件发送逻辑- 新增SchedulingEvent模型封装调度事件信息&#10;- 添加BridgeEventController处理接收的Bridge事件- 实现BridgeEventService及其实现类处理事件存储与查询&#10;- 更新ClusterController和SchedulingController的注释说明" />
     <MESSAGE value="refactor(core):重构项目结构并优化K8s客户端工具类&#10;&#10;- 创建scheduler-common和scheduler-pojo公共模块&#10;- 将K8sClientUtil移至scheduler-common并支持多集群连接缓存&#10;- 新增ClusterProperties和K8sClientProperties配置类&#10;- 重构Bridge和LocalSchedulerAgent模块依赖关系- 移除冗余的SchedulingEvent和ClusterStatus模型类- 优化HttpClientUtil工具类实现&#10;- 更新各模块pom.xml依赖配置&#10;- 调整application配置文件格式为yaml并统一配置结构" />
@@ -652,7 +658,8 @@
     <MESSAGE value="refactor(scheduler): 重构异常检测与稳定性评估逻辑&#10;&#10;- 移除旧版 AnomalyDetectionTask 定时任务&#10;- 删除 AnomalyDetectorUtil 和 HealthEvaluator 工具类&#10;- 重命名 AnomalyDetectionService 为 NetworkStabilityService&#10;- 重新实现 evaluateStability 方法，采用论文中的 S_net 评分模型&#10;- 引入相对波动率 (relative volatility) 计算机制&#10;- 调整 ClusterScoreServiceImpl 中的基础分计算方式&#10;- 修改熔断逻辑判断条件，使用 baseScore 替代 stability&#10;- 优化日志输出内容，增强调试信息可读性&#10;- 更新 MemberClusterServiceImpl 依赖注入与调用逻辑&#10;- 调整 workspace.xml 中的相关配置与文件路径记录" />
     <MESSAGE value="refactor(scheduler): 优化集群评分与网络聚合逻辑&#10;&#10;- 移除亲和性协同修正逻辑，简化评分模型&#10;- 调整熔断判断条件，增强稳定性评估准确性&#10;- 优化日志输出格式，便于论文实验数据分析&#10;- 改进网络指标聚合算法，引入健康链路过滤机制&#10;- 更新丢包率与延迟计算方式，提升评分合理性&#10;- 删除冗余的权重配置常量，精简代码结构" />
     <MESSAGE value="refactor(scheduler): 优化稳定性预测与评分逻辑&#10;&#10;- 引入双重EWMA模型，分别计算趋势和波动，提升预测准确性&#10;- 使用EwmaState存储预测均值和偏差，实现冷启动和状态维护&#10;- 提供完整预测结果ForecastResult，包含均值、偏差和相对波动率&#10;- NetworkStabilityService整合预测结果，计算更合理的风险与稳定性评分&#10;- 调整熔断判定条件，强化异常检测的灵敏度与准确度&#10;- 移除旧异常检测任务和工具，简化代码并提升系统性能&#10;- 优化日志输出格式，方便论文数据分析与调试追踪&#10;- 引入健康链路过滤策略，改进网络指标聚合算法，提高评分合理性" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor(scheduler): 优化稳定性预测与评分逻辑&#10;&#10;- 引入双重EWMA模型，分别计算趋势和波动，提升预测准确性&#10;- 使用EwmaState存储预测均值和偏差，实现冷启动和状态维护&#10;- 提供完整预测结果ForecastResult，包含均值、偏差和相对波动率&#10;- NetworkStabilityService整合预测结果，计算更合理的风险与稳定性评分&#10;- 调整熔断判定条件，强化异常检测的灵敏度与准确度&#10;- 移除旧异常检测任务和工具，简化代码并提升系统性能&#10;- 优化日志输出格式，方便论文数据分析与调试追踪&#10;- 引入健康链路过滤策略，改进网络指标聚合算法，提高评分合理性" />
+    <MESSAGE value="```&#10;feat(global-scheduler): 添加实验控制面板配置和LSTM风险预测功能&#10;&#10;添加实验模式控制配置，支持reactive、prediction和proposed三种模式，&#10;集成LSTM预测器进行网络故障概率计算，并实现不同策略的风险评分算法&#10;&#10;BREAKING CHANGE: 更改了应用端口从808到9090&#10;&#10;perf(local-scheduler-agent): 优化集群邻居IP配置和数据上报频率&#10;&#10;将邻居集群IP从域名改为实际IP地址，提高网络连接可靠性，&#10;并将数据上报频率从每10秒调整为每1秒，增强实时性&#10;&#10;fix(global-scheduler): 修复集群名称映射和网络聚合策略&#10;&#10;解决Karmada集群名称与本地名称不匹配的问题，实现cluster到member的&#10;自动映射，同时优化网络延迟聚合算法，采用最小值策略替代平均值&#10;&#10;refactor(global-scheduler): 重构网络稳定性评估服务&#10;&#10;移除复杂的多维度风险计算，简化为基于LSTM风险概率的统一评分模型，&#10;支持多种实验模式对比，包括基线版本和提出的RCGS完整版算法&#10;```" />
+    <option name="LAST_COMMIT_MESSAGE" value="```&#10;feat(global-scheduler): 添加实验控制面板配置和LSTM风险预测功能&#10;&#10;添加实验模式控制配置，支持reactive、prediction和proposed三种模式，&#10;集成LSTM预测器进行网络故障概率计算，并实现不同策略的风险评分算法&#10;&#10;BREAKING CHANGE: 更改了应用端口从808到9090&#10;&#10;perf(local-scheduler-agent): 优化集群邻居IP配置和数据上报频率&#10;&#10;将邻居集群IP从域名改为实际IP地址，提高网络连接可靠性，&#10;并将数据上报频率从每10秒调整为每1秒，增强实时性&#10;&#10;fix(global-scheduler): 修复集群名称映射和网络聚合策略&#10;&#10;解决Karmada集群名称与本地名称不匹配的问题，实现cluster到member的&#10;自动映射，同时优化网络延迟聚合算法，采用最小值策略替代平均值&#10;&#10;refactor(global-scheduler): 重构网络稳定性评估服务&#10;&#10;移除复杂的多维度风险计算，简化为基于LSTM风险概率的统一评分模型，&#10;支持多种实验模式对比，包括基线版本和提出的RCGS完整版算法&#10;```" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
