@@ -1,25 +1,21 @@
 package com.qinhan.service.impl;
 
-import com.qinhan.algorithm.EwmaForecaster;
 import com.qinhan.model.ClusterStatus;
-import com.qinhan.model.ForecastResult;
-import com.qinhan.service.NaiveStabilityComparisonService;
+import com.qinhan.model.EwmaFeatureVector;
+import com.qinhan.model.PredictionResult;
 import com.qinhan.service.NetworkStabilityService;
-import com.qinhan.service.RawLSTMStabilityService; // 确认你的类名是这个
-import com.qinhan.util.ExperimentDataLogger;
+import com.qinhan.util.LSTMPredictor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class NetworkStabilityServiceImpl implements NetworkStabilityService {
-
-    private final EwmaForecaster ewmaForecaster;
-    private final NaiveStabilityComparisonService naiveService;
-    private final RawLSTMStabilityService rawLSTMStabilityService; // 注入 Raw 服务
 
     @Value("${experiment.risk-alpha:0.5}")
     private double riskAlpha;
@@ -30,90 +26,64 @@ public class NetworkStabilityServiceImpl implements NetworkStabilityService {
     @Override
     public void evaluateStability(ClusterStatus status) {
         String clusterName = status.getClusterName();
-        long timestamp = System.currentTimeMillis();
-        double currentLatency = status.getNetworkLatency();
 
-        // =============================================================
-        // 🌟 核心数据准备 (获取 Proposed 组的预测值)
-        // =============================================================
-        // 调用 Port 5001
-        ForecastResult ewmaResult = ewmaForecaster.predict(clusterName, "latency", currentLatency);
+        // 由 LSA 侧已经计算好的 EWMA 特征值
+        double predMu = status.getLatencyMeanFeature();
+        double predSigma = status.getLatencyDeviationFeature();
+        double vt = status.getVolatility();
 
-        double predMu = ewmaResult.getPredMean();
-        double predSigma = ewmaResult.getPredDeviation();
-        double volatility = ewmaResult.getVolatility();
-        double proposedRiskProb = ewmaResult.getRiskProbability();
+        log.info("GS接收特征摘要: cluster={} mu={}ms sigma={}ms vt={}% agg_latency={} peerRawStats={}",
+                clusterName,
+                String.format("%.2f", predMu),
+                String.format("%.2f", predSigma),
+                String.format("%.1f", vt * 100),
+                status.getNetworkLatency(),
+                status.getPeerRawStats()
+        );
+
+        log.debug("GS接收完整ClusterStatus: {}", status);
+        log.debug("GS接收peerRawStats: {}", status.getPeerRawStats());
+        log.debug("GS接收ftWindow: {}", status.getFtWindow());
 
         // 统一归一化预测值 (供多个组复用)
         double normPred = Math.min(1.0, predMu / MAX_LATENCY_NORM);
 
-        // =============================================================
-        // 🧪 1. Baseline 组 (Reactive / Native)
-        // =============================================================
-        // 逻辑：只要没断网 (>1000ms)，就认为网络是好的 (Cost=0.1 -> Score=90)
-        double costBaseline = (currentLatency > 1000) ? 1.0 : 0.1;
-        double scoreBaseline = (1.0 - costBaseline) * 100.0;
+        // 调用 LSTM 获取故障风险概率：主路径使用窗口推理，单点接口仅兜底。
+        List<EwmaFeatureVector> ftWindow = status.getFtWindow();
+        PredictionResult lstmResult;
+        String inferenceMode;
+        if (ftWindow != null && !ftWindow.isEmpty()) {
+            inferenceMode = "window";
+            lstmResult = LSTMPredictor.predictByWindow(clusterName, ftWindow);
+            if (!lstmResult.isSuccess()) {
+                log.warn("窗口推理失败，回退单点推理: cluster={}, msg={}", clusterName, lstmResult.getMessage());
+                inferenceMode = "single-fallback";
+                lstmResult = LSTMPredictor.predict(clusterName, predMu, predSigma, vt);
+            }
+        } else {
+            log.warn("ftWindow 为空，回退单点推理: cluster={}", clusterName);
+            inferenceMode = "single-no-window";
+            lstmResult = LSTMPredictor.predict(clusterName, predMu, predSigma, vt);
+        }
 
-        // =============================================================
-        // 🧪 2. Raw-LSTM 组 (w/o AD-EWMA)
-        // =============================================================
-        // 逻辑：调用 5002 端口，模拟没有特征工程的情况
-        double scoreRawLstm = rawLSTMStabilityService.calculateScore(clusterName, currentLatency);
+        int windowSize = ftWindow == null ? 0 : ftWindow.size();
+        log.info("Python推理 prob: cluster={} prob={} fault={} mode={} windowSize={}",
+                clusterName,
+                String.format("%.4f", lstmResult.getProbability()),
+                lstmResult.isFault(),
+                inferenceMode,
+                windowSize);
 
-        // =============================================================
-        // 🧪 3. Stat-Only 组 (w/o KG-LSTM)
-        // =============================================================
-        // 逻辑：有 EWMA 特征，但没有 LSTM。用 Sigma (波动) 线性惩罚。
-        double normSigma = Math.min(1.0, predSigma / 60.0); // 60ms 视为大波动
-        double costStatOnly = (1 - riskAlpha) * normPred + (riskAlpha * normSigma);
-        double scoreStatOnly = (1.0 - Math.min(1.0, costStatOnly)) * 100.0;
+        double proposedRiskProb = lstmResult.getProbability();
 
-        // =============================================================
-        // 🌟 4. Proposed 组 (Full AD-EWMA + KG-LSTM)
-        // =============================================================
-        // 逻辑：使用 LSTM 输出的概率作为风险项
-        // 熔断保护：如果概率 > 0.8，直接拉满风险
+        // 熔断保护
         double effectiveRisk = (proposedRiskProb > 0.8) ? 1.0 : proposedRiskProb;
-
         double costProposed = (1 - riskAlpha) * normPred + (riskAlpha * effectiveRisk);
         double scoreProposed = (1.0 - Math.min(1.0, costProposed)) * 100.0;
 
-        // =============================================================
-        // 📝 最终落地 & 日志
-        // =============================================================
-
-        // 1. 设置最终分数 (给调度器用最好的 Proposed)
+        // 设置最终分数
         status.setStabilityScore(scoreProposed);
-        status.setVolatility(volatility);
+        status.setVolatility(vt);
         status.setRemark(String.format("Risk:%.2f -> Score:%.1f", proposedRiskProb, scoreProposed));
-
-        // 2. 🔥 打印 4 合 1 对比日志 (核心！)
-        // 格式: EXP-MULTI, Cluster, Time, Baseline, RawLSTM, StatOnly, Proposed
-        log.info("EXP-MULTI,{},{},{},{},{},{},{}",
-                clusterName,
-                timestamp,
-                String.format("%.2f", currentLatency), // 🔥 绝杀列：真实延迟
-                String.format("%.2f", scoreBaseline),
-                String.format("%.2f", scoreRawLstm),
-                String.format("%.2f", scoreStatOnly),
-                String.format("%.2f", scoreProposed)
-        );
-
-        // 2. 🔥🔥【新增】如果是 member1，直接导出到 Excel (CSV) 🔥🔥
-        // 引入类: com.qinhan.util.ExperimentDataLogger
-        if ("member1".equalsIgnoreCase(clusterName)) {
-            ExperimentDataLogger.log(
-                    clusterName,
-                    timestamp,
-                    currentLatency,
-                    scoreBaseline,
-                    scoreRawLstm,
-                    scoreStatOnly,
-                    scoreProposed
-            );
-        }
-
-        // 3. 影子对比 (保留旧逻辑用于观察)
-        naiveService.logComparison(status);
     }
 }

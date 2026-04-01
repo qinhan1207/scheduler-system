@@ -12,5 +12,5 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "http.client")
 public class HttpClientProperties {
     private int connectTimeout = 5000;
-    private int readTimeout = 5000;
+    private int readTimeout = 10000;
 }

@@ -2,6 +2,7 @@ package com.qinhan.service.impl;
 
 import com.qinhan.client.GlobalSchedulerClient;
 import com.qinhan.model.ClusterStatus;
+import com.qinhan.model.EwmaFeatureVector;
 import com.qinhan.properties.LsaClusterConfigProperties;
 import com.qinhan.service.ClusterMonitorService;
 import com.qinhan.service.ReportService;
@@ -10,7 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -21,58 +27,66 @@ public class ReportServiceImpl implements ReportService {
     private final LsaClusterConfigProperties lsaProperties;
     private final GlobalSchedulerClient globalSchedulerClient;
 
-    /**
-     * 定时采集并上报
-     * 频率: 每 1 秒一次
-     */
-    @Override
-    @Scheduled(fixedRateString = "${report.interval:1000}")    //修改上报数据间隔，采集数据
-    public void reportAllClusters() {
-        String mode = lsaProperties.getMode();
+    private final Map<String, ClusterStatus> latestStatusMap = new ConcurrentHashMap<>();
+    private final Map<String, Deque<EwmaFeatureVector>> ftWindowMap = new ConcurrentHashMap<>();
 
+    /**
+     * 高频采样（1s默认）：采样并组装窗口，不上报。
+     */
+    @Scheduled(fixedRateString = "${lsa.sample-interval-ms:1000}")
+    public void sampleAllClusters() {
+        String mode = lsaProperties.getMode();
         if ("distributed".equalsIgnoreCase(mode)) {
-            // === 分布式模式 (In-Cluster) ===
-            reportSelf();
+            sampleSelf();
         } else {
-            // === 集中式模式 (Standalone / Dev) ===
-            reportConfiguredClusters();
+            sampleConfiguredClusters();
         }
     }
 
     /**
-     * 分布式模式：只采集自己
+     * 周期上报：低频把最近状态 + f_t窗口上报给 GS。
      */
-    private void reportSelf() {
+    @Override
+    @Scheduled(fixedRateString = "${lsa.report-interval-ms:5000}")
+    public void reportAllClusters() {
+        if (latestStatusMap.isEmpty()) {
+            log.debug("[上报任务] 暂无采样数据，跳过本周期");
+            return;
+        }
+
+        latestStatusMap.forEach((clusterName, latest) -> {
+            try {
+                ClusterStatus payload = buildPayload(clusterName, latest);
+                globalSchedulerClient.sendClusterStatus(payload);
+                int windowSize = payload.getFtWindow() == null ? 0 : payload.getFtWindow().size();
+                log.info("✅ 上报成功: 集群={} | ftWindow={} | mu(latency)={} | mu(loss)={}",
+                        clusterName,
+                        windowSize,
+                        String.format("%.2f", payload.getLatencyMeanFeature()),
+                        String.format("%.2f", payload.getLossMeanFeature()));
+            } catch (Exception e) {
+                log.error("❌ 集群 [{}] 上报失败: {}", clusterName, e.getMessage());
+            }
+        });
+    }
+
+    private void sampleSelf() {
         String clusterName = lsaProperties.getCurrentClusterName();
-        log.info("🛰️ [分布式模式] 开始采集本地集群状态: {}", clusterName);
+        log.debug("[采样任务] 分布式采样: {}", clusterName);
 
         try {
-            // 传 "in-cluster" 给 ClientUtil，让它使用 ServiceAccount
             ClusterStatus status = clusterMonitorService.collectClusterStatus("in-cluster");
 
             if (status != null) {
-                status.setClusterName(clusterName); // 补全名字
-
-                // 上报
-                globalSchedulerClient.sendClusterStatus(status);
-
-                int neighborCount = (status.getPeerRawStats() != null) ? status.getPeerRawStats().size() : 0;
-                log.info("✅ 上报成功: 集群={} | 探测邻居数={} | 原始探测样本={}",
-                        clusterName,
-                        neighborCount,
-                        neighborCount > 0 ? status.getPeerRawStats() : "none");
+                status.setClusterName(clusterName);
+                rememberSample(clusterName, status);
             }
         } catch (Exception e) {
-            log.error("❌ 本地集群 [{}] 上报失败: {}", clusterName, e.getMessage());
+            log.error("❌ 本地集群 [{}] 采样失败: {}", clusterName, e.getMessage());
         }
     }
 
-    /**
-     * 集中式模式：遍历配置文件 (旧逻辑保留用于调试)
-     */
-    private void reportConfiguredClusters() {
-        log.info("🛰️ [集中式模式] 开始轮询采集配置列表...");
-
+    private void sampleConfiguredClusters() {
         if (lsaProperties.getClusters() == null || lsaProperties.getClusters().getConfigs() == null) {
             log.warn("⚠️ 未配置集群列表");
             return;
@@ -85,12 +99,54 @@ public class ReportServiceImpl implements ReportService {
                 ClusterStatus status = clusterMonitorService.collectClusterStatus(config.getKubeconfigPath());
                 if (status != null) {
                     status.setClusterName(config.getName());
-                    globalSchedulerClient.sendClusterStatus(status);
-                    log.info("✅ 上报成功: {}", config.getName());
+                    rememberSample(config.getName(), status);
                 }
             } catch (Exception e) {
-                log.error("❌ 集群 [{}] 上报失败: {}", config.getName(), e.getMessage());
+                log.error("❌ 集群 [{}] 采样失败: {}", config.getName(), e.getMessage());
             }
         });
+    }
+
+    private void rememberSample(String clusterName, ClusterStatus status) {
+        latestStatusMap.put(clusterName, status);
+
+        Deque<EwmaFeatureVector> queue = ftWindowMap.computeIfAbsent(clusterName, k -> new ArrayDeque<>());
+        synchronized (queue) {
+            queue.addLast(EwmaFeatureVector.builder()
+                    .meanFeature(status.getLatencyMeanFeature())
+                    .deviationFeature(status.getLatencyDeviationFeature())
+                    .volatility(status.getVolatility())
+                    .build());
+
+            int maxWindow = Math.max(1, lsaProperties.getFtWindowSize());
+            while (queue.size() > maxWindow) {
+                queue.removeFirst();
+            }
+        }
+    }
+
+    private ClusterStatus buildPayload(String clusterName, ClusterStatus latest) {
+        List<EwmaFeatureVector> ftWindow;
+        Deque<EwmaFeatureVector> queue = ftWindowMap.get(clusterName);
+        if (queue == null) {
+            ftWindow = new ArrayList<>();
+        } else {
+            synchronized (queue) {
+                ftWindow = new ArrayList<>(queue);
+            }
+        }
+
+        return ClusterStatus.builder()
+                .clusterName(clusterName)
+                .timestamp(latest.getTimestamp())
+                .networkLatency(latest.getNetworkLatency())
+                .packetLossRate(latest.getPacketLossRate())
+                .peerRawStats(latest.getPeerRawStats())
+                .latencyMeanFeature(latest.getLatencyMeanFeature())
+                .lossMeanFeature(latest.getLossMeanFeature())
+                .latencyDeviationFeature(latest.getLatencyDeviationFeature())
+                .volatility(latest.getVolatility())
+                .ftWindow(ftWindow)
+                .build();
     }
 }

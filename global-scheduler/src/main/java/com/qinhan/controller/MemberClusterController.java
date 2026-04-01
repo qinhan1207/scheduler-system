@@ -22,12 +22,13 @@ public class MemberClusterController {
 
     /**
      * 接收上报的数据
+     *
      * @param status 由成员集群进行上报的数据
      * @return 数据来自哪一个集群
      */
     @PostMapping("/report")
     public String reportStatus(@RequestBody ClusterStatus status) {
-        log.info("接收上报的原始数据:{}",status);
+        log.debug("接收上报的原始数据:{}", status);
         memberClusterService.updateClusterStatus(status);
         return "✅ Received status from cluster: " + status.getClusterName();
     }

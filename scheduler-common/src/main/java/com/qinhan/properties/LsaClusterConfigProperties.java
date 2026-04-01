@@ -27,6 +27,21 @@ public class LsaClusterConfigProperties {
     private String currentClusterName;
 
     /**
+     * 采样周期（毫秒）：高频采样并执行 EWMA
+     */
+    private long sampleIntervalMs = 1000;
+
+    /**
+     * 上报周期（毫秒）：低频上报窗口与最近状态
+     */
+    private long reportIntervalMs = 5000;
+
+    /**
+     * 窗口大小：上报时携带最近 N 个 f_t
+     */
+    private int ftWindowSize = 10;
+
+    /**
      * 集中式模式下的集群配置列表
      */
     private Clusters clusters;

@@ -17,11 +17,14 @@ public class ClusterScore {
     /** 集群名称 */
     private String clusterName;
 
-    /** 综合得分（0~100） */
+    /**
+     * 兼容旧字段：综合得分（0~100）。
+     * 建议优先读取 finalScore。
+     */
     private double healthScore;
 
-    /** 健康状态（Healthy / Warning / Critical） */
-    private String healthStatus;
+    /** 最终调度分（0~100） */
+    private double finalScore;
 
     /** 评分说明 */
     private String reason;

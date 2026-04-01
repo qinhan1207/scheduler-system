@@ -53,9 +53,9 @@ public class K8sClientUtil {
                 }
 
                 // 通用配置：跳过 SSL 验证 (实验环境常用)
-                client.setVerifyingSsl(false);
+                client.setVerifyingSsl(properties.isVerifySsl());
                 // 设置读取超时为 0 (无限)，方便 Watch 操作
-                client.setReadTimeout(0);
+                client.setReadTimeout(properties.getReadTimeout());
 
                 // 设置为全局默认 Client (可选)
                 Configuration.setDefaultApiClient(client);

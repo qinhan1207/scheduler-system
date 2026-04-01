@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,14 +20,8 @@ import java.util.Map;
 public class ClusterStatus {
 
     // ================== 身份信息 ==================
-    /** 数据库主键 (入库后生成) */
-    private Long id;
-
     /** 集群名称（唯一标识） */
     private String clusterName;
-
-    /** 集群 API Server 地址 */
-    private String apiServerAddress;
 
     /** Agent 采集时的各时间戳 */
     private long timestamp;
@@ -48,10 +42,20 @@ public class ClusterStatus {
      */
     private Map<String, Double> peerLatencyMap;
 
-    // ================== 异常检测与预测结果 (由 GS 计算回填) ==================
-    /** 异常检测得分（0-100） */
-    private double anomalyScore;
+    // ================== EWMA 特征结果 (由 LSA 计算上报) ==================
+    /** EWMA 延迟均值特征 (mu_latency) */
+    private double latencyMeanFeature;
 
+    /** EWMA 丢包均值特征 (mu_loss) */
+    private double lossMeanFeature;
+
+    /**
+     * EWMA 延迟偏差特征 (sigma_t)
+     * 来源：EwmaFeatureExtractor 中的 newDeviation。
+     */
+    private double latencyDeviationFeature;
+
+    // ================== 稳定性评分结果 (由 GS 计算回填) ==================
     /** 稳定性预测得分（EWMA 预测结果） */
     private double stabilityScore;
 
@@ -64,16 +68,13 @@ public class ClusterStatus {
      */
     private double volatility;
 
-    /** 集群健康状态（Healthy / Warning / Critical） */
-    private String healthStatus;
-
-    /** 健康分：0-100 越高越好 */
-    private double healthScore;
-
     /** 备注信息 */
     private String remark;
 
-    /** 数据入库时间 (服务端生成) */
-    private Instant createdAt;
+    /**
+     * 特征窗口序列 f_t (由 LSA 侧组装)
+      * 约定：meanFeature=延迟均值(mu), deviationFeature=延迟偏差(sigma), volatility=sigma/mu
+     */
+    private List<EwmaFeatureVector> ftWindow;
 
 }

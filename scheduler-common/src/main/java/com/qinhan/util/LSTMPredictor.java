@@ -1,5 +1,6 @@
 package com.qinhan.util;
 
+import com.qinhan.model.EwmaFeatureVector;
 import com.qinhan.model.PredictionResult;
 
 import java.io.BufferedReader;
@@ -9,11 +10,13 @@ import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public class LSTMPredictor {
 
     // ⚠️ 确保 SSH 隧道 (ssh -L 5001:127.0.0.1:5001 ...) 已经开启
     private static final String SERVER_URL = "http://127.0.0.1:5001/predict";
+    private static final String WINDOW_SERVER_URL = "http://127.0.0.1:5001/predict/window";
 
     /**
      * 调用 LSTM 模型进行预测
@@ -26,20 +29,6 @@ public class LSTMPredictor {
      */
     public static PredictionResult predict(String clusterName, double mu, double sigma, double volatility) {
         try {
-            URL url = new URL(SERVER_URL);
-
-            // 关键：显式使用 NO_PROXY，防止被 VPN/代理拦截
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection(Proxy.NO_PROXY);
-
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json; utf-8");
-            conn.setRequestProperty("Accept", "application/json");
-            // 可选：在 Header 里也带上，双重保险
-            conn.setRequestProperty("X-Cluster-Name", clusterName);
-            conn.setDoOutput(true);
-            conn.setConnectTimeout(1000); // 1秒超时，快速失败
-            conn.setReadTimeout(1000);
-
             // 1. 构建 JSON 字符串
             // 🔥 关键修改：加入 "cluster_name" 字段
             String jsonInput = String.format(
@@ -47,35 +36,87 @@ public class LSTMPredictor {
                     clusterName, mu, sigma, volatility
             );
 
-            // 2. 发送请求
-            try (OutputStream os = conn.getOutputStream()) {
-                byte[] input = jsonInput.getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
-            }
-
-            // 3. 检查状态码
-            int code = conn.getResponseCode();
-            if (code != 200 && code != 202) {
-                return PredictionResult.failure("HTTP Error: " + code);
-            }
-
-            // 4. 读取响应
-            StringBuilder response = new StringBuilder();
-            try (BufferedReader br = new BufferedReader(
-                    new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    response.append(line.trim());
-                }
-            }
-
-            // 5. 手动解析 JSON (避免引入 Gson/Jackson 依赖)
-            return parseJson(response.toString());
+            return postJson(SERVER_URL, clusterName, jsonInput);
 
         } catch (Exception e) {
             // 网络不通（如 SSH 隧道断了）
             return PredictionResult.failure("Connection Failed: " + e.getMessage());
         }
+    }
+
+    /**
+     * 按窗口推理（主路径）
+     * Python 侧接口接收二维序列：(windowSize, 3)，每个点为 [mu, sigma, volatility]。
+     */
+    public static PredictionResult predictByWindow(String clusterName, List<EwmaFeatureVector> ftWindow) {
+        if (ftWindow == null || ftWindow.isEmpty()) {
+            return PredictionResult.failure("Empty ftWindow");
+        }
+
+        try {
+            StringBuilder windowJson = new StringBuilder("[");
+            for (int i = 0; i < ftWindow.size(); i++) {
+                EwmaFeatureVector point = ftWindow.get(i);
+                if (point == null) {
+                    continue;
+                }
+                if (windowJson.length() > 1) {
+                    windowJson.append(',');
+                }
+                windowJson.append(String.format("[%f,%f,%f]",
+                        point.getMeanFeature(),
+                        point.getDeviationFeature(),
+                        point.getVolatility()));
+            }
+            windowJson.append(']');
+
+            String jsonInput = String.format(
+                    "{\"cluster_name\": \"%s\", \"ft_window\": %s}",
+                    clusterName,
+                    windowJson
+            );
+
+            return postJson(WINDOW_SERVER_URL, clusterName, jsonInput);
+
+        } catch (Exception e) {
+            return PredictionResult.failure("Connection Failed: " + e.getMessage());
+        }
+    }
+
+    private static PredictionResult postJson(String serverUrl, String clusterName, String jsonInput) throws Exception {
+        URL url = new URL(serverUrl);
+
+        // 关键：显式使用 NO_PROXY，防止被 VPN/代理拦截
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection(Proxy.NO_PROXY);
+
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/json; utf-8");
+        conn.setRequestProperty("Accept", "application/json");
+        conn.setRequestProperty("X-Cluster-Name", clusterName);
+        conn.setDoOutput(true);
+        conn.setConnectTimeout(1000); // 1秒超时，快速失败
+        conn.setReadTimeout(1000);
+
+        try (OutputStream os = conn.getOutputStream()) {
+            byte[] input = jsonInput.getBytes(StandardCharsets.UTF_8);
+            os.write(input, 0, input.length);
+        }
+
+        int code = conn.getResponseCode();
+        if (code != 200 && code != 202) {
+            return PredictionResult.failure("HTTP Error: " + code);
+        }
+
+        StringBuilder response = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                response.append(line.trim());
+            }
+        }
+
+        return parseJson(response.toString());
     }
 
     /**

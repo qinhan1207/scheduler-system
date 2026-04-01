@@ -50,6 +50,7 @@ public class ClusterScoreServiceImpl implements ClusterScoreService {
             return ClusterScore.builder()
                     .clusterName(clusterName) // 返回给插件时，必须用它认识的原始名字
                     .healthScore(0)
+                    .finalScore(0)
                     .reason("未找到集群状态数据")
                     .build();
         }
@@ -71,6 +72,7 @@ public class ClusterScoreServiceImpl implements ClusterScoreService {
         ClusterScore result = ClusterScore.builder()
                 .clusterName(clusterName)
                 .healthScore(finalScore)
+             .finalScore(finalScore)
                 .reason(reason)
                 .build();
 
